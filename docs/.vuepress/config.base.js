@@ -2,6 +2,12 @@ const markdown = require("@tsed/markdown-it-symbols");
 const team = require("../../team.json");
 const {version} = require("../../package");
 
+const ALGOLIA = {
+  apiKey: "9a1620e0f36bc5dc3b0982fdcbdd6f5f",
+  indexName: "ts_ed",
+  appId: "DH8VVM2E1E"
+};
+
 module.exports = ({title, description, base = "", url, apiRedirectUrl = "", themeConfig}) => ({
   title,
   description,
@@ -25,7 +31,8 @@ module.exports = ({title, description, base = "", url, apiRedirectUrl = "", them
     ["meta", {property: "og:image:height", content: "1024"}],
     ["meta", {name: "twitter:title", content: title}],
     ["meta", {name: "twitter:description", content: description}],
-    ["meta", {name: "twitter:card", content: "summary"}]
+    ["meta", {name: "twitter:card", content: "summary"}],
+    ["link", {rel: "preconnect", href: `https://${ALGOLIA.appId}-dsn.algolia.net`, crossOrigin: true}]
   ],
   themeConfig: {
     shortTitle: "Ts.ED",
@@ -53,10 +60,7 @@ module.exports = ({title, description, base = "", url, apiRedirectUrl = "", them
     apiRedirectUrl,
     smoothScroll: true,
     lastUpdated: "Last updated",
-    algolia: {
-      apiKey: "f8a038207e461aaac0e2fd16403c2b01",
-      indexName: "ts_ed"
-    },
+    algolia: ALGOLIA,
     locales: {
       "/": {
         label: "English",
@@ -164,6 +168,10 @@ module.exports = ({title, description, base = "", url, apiRedirectUrl = "", them
               {
                 text: "Session & Cookies",
                 link: `${base}/tutorials/session.html`
+              },
+              {
+                text: "Testing",
+                link: `${base}/docs/testing.html`
               }
             ]
           },
@@ -252,6 +260,10 @@ module.exports = ({title, description, base = "", url, apiRedirectUrl = "", them
               {
                 text: "Terminus",
                 link: `${base}/tutorials/terminus.html`
+              },
+              {
+                text: "Vite plugin ssr",
+                link: `${base}/tutorials/vite-plugin-ssr.html`
               }
             ].sort((a, b) => (a.text < b.text ? -1 : 1))
           },
@@ -266,6 +278,10 @@ module.exports = ({title, description, base = "", url, apiRedirectUrl = "", them
               {
                 text: "Ts.ED Logger",
                 link: "http://logger.tsed.io"
+              },
+              {
+                text: "Ts.ED Formio.js",
+                link: "http://formio.tsed.io"
               },
               {
                 text: "Team",
@@ -284,6 +300,10 @@ module.exports = ({title, description, base = "", url, apiRedirectUrl = "", them
                 link: `${base}/support.html`
               },
               {
+                text: "Contact",
+                link: `${base}/contact.html`
+              },
+              {
                 text: "License",
                 link: `${base}/license.html`
               },
@@ -294,6 +314,8 @@ module.exports = ({title, description, base = "", url, apiRedirectUrl = "", them
             ]
           },
           {
+            title: "Current version",
+            tag: "version",
             text: `v${version}`,
             position: "right",
             items: [
@@ -396,7 +418,8 @@ module.exports = ({title, description, base = "", url, apiRedirectUrl = "", them
               {title: "Terminus", path: base + "/tutorials/terminus"},
               {title: "Serverless", path: base + "/tutorials/serverless"},
               {title: "IORedis", path: base + "/tutorials/ioredis"},
-              {title: "Objection.js", path: base + "/tutorials/objection"}
+              {title: "Objection.js", path: base + "/tutorials/objection"},
+              {title: "Vite plugin ssr", path: base + "/tutorials/vite-plugin-ssr"}
             ].sort((a, b) => (a.title < b.title ? -1 : 1))
           },
           {
@@ -508,10 +531,6 @@ module.exports = ({title, description, base = "", url, apiRedirectUrl = "", them
   },
   plugins: {
     "@vuepress/html-redirect": {},
-    "@vuepress/pwa": {
-      serviceWorker: true,
-      updatePopup: true
-    },
     "@vuepress/google-analytics": {
       ga: "UA-35240348-1"
     },
@@ -522,6 +541,9 @@ module.exports = ({title, description, base = "", url, apiRedirectUrl = "", them
       options: {
         margin: 16
       }
+    },
+    sitemap: {
+      hostname: url
     }
   },
   markdown: {

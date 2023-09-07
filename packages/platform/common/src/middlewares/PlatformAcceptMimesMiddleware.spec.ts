@@ -1,5 +1,7 @@
-import {AcceptMime, EndpointMetadata, Get, PlatformTest} from "@tsed/common";
 import {catchError} from "@tsed/core";
+import {EndpointMetadata, Get} from "@tsed/schema";
+import {AcceptMime} from "../exports";
+import {PlatformTest} from "../services/PlatformTest";
 import {PlatformAcceptMimesMiddleware} from "./PlatformAcceptMimesMiddleware";
 
 describe("PlatformMimesMiddleware", () => {

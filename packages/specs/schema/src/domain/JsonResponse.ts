@@ -1,37 +1,16 @@
 import {OS3MediaType, OS3Response} from "@tsed/openspec";
 import {JsonHeader} from "../interfaces/JsonOpenSpec";
-import {JsonSchemaOptions} from "../interfaces/JsonSchemaOptions";
 import {mapHeaders} from "../utils/mapHeaders";
 import {toJsonMapCollection} from "../utils/toJsonMapCollection";
 import {JsonMap} from "./JsonMap";
+import {JsonMedia} from "./JsonMedia";
 import {JsonSchema} from "./JsonSchema";
 
 export type JsonResponseOptions = OS3Response<JsonSchema, string | JsonHeader>;
 
-export class JsonMedia extends JsonMap<OS3MediaType<JsonSchema>> {
-  groups: string[] = [];
-  allowedGroups?: Set<string>;
-
-  schema(schema: JsonSchema) {
-    this.set("schema", schema);
-
-    return this;
-  }
-
-  examples(examples: any) {
-    this.set("examples", examples);
-
-    return this;
-  }
-
-  toJSON(options: JsonSchemaOptions = {}): any {
-    let groups = [...(this.groups || [])];
-
-    return super.toJSON({...options, groups});
-  }
-}
-
 export class JsonResponse extends JsonMap<JsonResponseOptions> {
+  $kind: string = "operationResponse";
+
   status: number;
 
   constructor(obj: Partial<JsonResponseOptions> = {}) {
@@ -76,26 +55,5 @@ export class JsonResponse extends JsonMap<JsonResponseOptions> {
     }
 
     return this;
-  }
-
-  toJSON(options: JsonSchemaOptions = {}): any {
-    const response = super.toJSON(options);
-
-    if (this.status === 204) {
-      delete response.content;
-    }
-
-    if (response.headers) {
-      Object.entries(response.headers).forEach(([key, {type, ...props}]: [string, any]) => {
-        response.headers[key] = {
-          ...props,
-          schema: {
-            type
-          }
-        };
-      });
-    }
-
-    return response;
   }
 }

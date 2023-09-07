@@ -22,7 +22,7 @@ export class MongooseService {
    */
   async connect(id: string, url: string, connectionOptions: ConnectOptions, isDefault = false): Promise<any> {
     if (this.has(id)) {
-      return await this.get(id)!;
+      return this.get(id)!;
     }
 
     this.logger.info(`Connect to mongo database: ${id}`);
@@ -40,7 +40,12 @@ export class MongooseService {
       return connection;
     } catch (er) {
       /* istanbul ignore next */
-      this.logger.error(er);
+      this.logger.error({
+        event: "MONGO_CONNECTION_ERROR",
+        error_name: er.name,
+        message: er.message,
+        stack: er.stack
+      });
       /* istanbul ignore next */
       process.exit();
     }

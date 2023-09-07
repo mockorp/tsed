@@ -47,7 +47,7 @@ and populate the directory with the initial core Ts.ED files and supporting modu
 Creating a new project with the CLI is recommended for first-time users.
 
 ```shell
-npm install -g @tsed/cli@4.0.0-rc.2
+npm install -g @tsed/cli
 tsed init .
 ```
 
@@ -84,7 +84,7 @@ When it's done, run one of this command:
 ```sh
 yarn start
 npm start
-pnm start
+pnpm start
 ```
 
 <figure><img src="/getting-started/server-start.png" style="max-height: 400px; padding: 0"></figure>
@@ -100,12 +100,12 @@ To prevent errors, fix the version for each Ts.ED packages:
 ```json
 {
   "dependencies": {
-    "@tsed/common": "7.0.0-rc.3",
-    "@tsed/di": "7.0.0-rc.3",
-    "@tsed/core": "7.0.0-rc.3",
-    "@tsed/exceptions": "7.0.0-rc.3",
-    "@tsed/plaftorm-express": "7.0.0-rc.3",
-    "@tsed/swagger": "7.0.0-rc.3"
+    "@tsed/common": "7.0.0",
+    "@tsed/di": "7.0.0",
+    "@tsed/core": "7.0.0",
+    "@tsed/exceptions": "7.0.0",
+    "@tsed/plaftorm-express": "7.0.0",
+    "@tsed/swagger": "7.0.0"
   }
 }
 ```

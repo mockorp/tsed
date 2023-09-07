@@ -1,10 +1,16 @@
+import {OpenSpec3} from "@tsed/openspec";
 import "@tsed/platform-exceptions";
-import {CollectionOf, Generics, getSpec, OperationPath, Property, Returns, SpecTypes} from "@tsed/schema";
-import {OpenSpec3} from "../../../../openspec/src/openspec3/OpenSpec3";
+import {SpecTypes} from "../../domain/SpecTypes";
+import {getSpec} from "../../utils/getSpec";
+import {CollectionOf} from "../collections/collectionOf";
+import {Property} from "../common/property";
+import {Generics} from "../generics/generics";
+import {OperationPath} from "./operationPath";
+import {Returns} from "./returns";
 
 describe("@Returns", () => {
   describe("Single contentType", () => {
-    it("should declare a return type with object", async () => {
+    it("should declare a return type with object", () => {
       // WHEN
       class Controller {
         @OperationPath("POST", "/")
@@ -44,7 +50,7 @@ describe("@Returns", () => {
         ]
       });
     });
-    it("should declare a return type", async () => {
+    it("should declare a return type", () => {
       // WHEN
       class Controller {
         @OperationPath("POST", "/")
@@ -84,7 +90,7 @@ describe("@Returns", () => {
         ]
       });
     });
-    it("should declare a return type (Status().Type())", async () => {
+    it("should declare a return type (Status().Type())", () => {
       // WHEN
       class Controller {
         @OperationPath("POST", "/")
@@ -124,7 +130,7 @@ describe("@Returns", () => {
         ]
       });
     });
-    it("should declare a return type with headers (openspec)", async () => {
+    it("should declare a return type with headers (openspec)", () => {
       // WHEN
       class Controller {
         @OperationPath("POST", "/")
@@ -191,7 +197,7 @@ describe("@Returns", () => {
         ]
       });
     });
-    it("should declare a return type with content-type", async () => {
+    it("should declare a return type with content-type", () => {
       // WHEN
       class Controller {
         @OperationPath("POST", "/")
@@ -232,7 +238,7 @@ describe("@Returns", () => {
         }
       });
     });
-    it("should declare error response", async () => {
+    it("should declare error response", () => {
       // WHEN
       class Controller {
         @OperationPath("POST", "/")
@@ -385,7 +391,7 @@ describe("@Returns", () => {
         ]
       });
     });
-    it("should declare error response on class", async () => {
+    it("should declare error response on class", () => {
       // WHEN
       @Returns(400).Description("Bad request").Header("x-token", "token")
       @Returns(401)
@@ -547,7 +553,7 @@ describe("@Returns", () => {
         ]
       });
     });
-    it("should throw an error when using of with String", async () => {
+    it("should throw an error when using of with String", () => {
       // WHEN
       let actualError: any;
       try {
@@ -562,7 +568,7 @@ describe("@Returns", () => {
 
       expect(actualError.message).toBe("Returns.Of cannot be used with the following primitive classes: String, Number, Boolean");
     });
-    it("should throw an error when using of with Collection", async () => {
+    it("should throw an error when using of with Collection", () => {
       // WHEN
       let actualError: any;
       try {
@@ -579,7 +585,7 @@ describe("@Returns", () => {
         "Returns.Nested cannot be used with the following classes: Map, Set, Array, String, Number, Boolean"
       );
     });
-    it("should declare an Array of string", async () => {
+    it("should declare an Array of string", () => {
       // WHEN
       class Controller {
         @OperationPath("POST", "/")
@@ -622,7 +628,7 @@ describe("@Returns", () => {
         ]
       });
     });
-    it("should declare an Array of Model", async () => {
+    it("should declare an Array of Model", () => {
       // WHEN
       class Model {
         @Property()
@@ -682,7 +688,7 @@ describe("@Returns", () => {
         ]
       });
     });
-    it("should declare an Generic of Model", async () => {
+    it("should declare an Generic of Model", () => {
       // WHEN
       @Generics("T")
       class Pagination<T> {
@@ -728,7 +734,7 @@ describe("@Returns", () => {
               ]
             }
           })
-        async method(): Promise<Pagination<Submission<Product>> | null> {
+        method(): Promise<Pagination<Submission<Product>> | null> {
           return null;
         }
       }
@@ -811,7 +817,7 @@ describe("@Returns", () => {
         ]
       });
     });
-    it("should declare an Generic of Model with enum (OS3)", async () => {
+    it("should declare an Generic of Model with enum (OS3)", () => {
       // WHEN
       @Generics("T")
       class Submission<T> {
@@ -830,8 +836,8 @@ describe("@Returns", () => {
       class Controller {
         @OperationPath("POST", "/")
         @Returns(200, Submission).Of(MyEnum).Description("description")
-        async method(): Promise<Submission<MyEnum> | null> {
-          return null;
+        method(): Promise<Submission<MyEnum> | null> {
+          return Promise.resolve(null);
         }
       }
 
@@ -876,7 +882,7 @@ describe("@Returns", () => {
         ]
       });
     });
-    it("should declare an Generic of Model with enum with pagination(OS3)", async () => {
+    it("should declare an Generic of Model with enum with pagination(OS3)", () => {
       // WHEN
       @Generics("T")
       class Pagination<T> {
@@ -922,7 +928,7 @@ describe("@Returns", () => {
               ]
             }
           })
-        async method(): Promise<Pagination<Submission<MyEnum>> | null> {
+        method(): Promise<Pagination<Submission<MyEnum>> | null> {
           return null;
         }
       }
@@ -1066,7 +1072,7 @@ describe("@Returns", () => {
     });
   });
   describe("Title", () => {
-    it("should declare an Generic of Model", async () => {
+    it("should declare an Generic of Model", () => {
       // WHEN
       @Generics("T")
       class Pagination<T> {
@@ -1094,7 +1100,7 @@ describe("@Returns", () => {
       class Controller {
         @OperationPath("POST", "/")
         @Returns(200, Pagination).Of(Submission).Nested(Product).Title("PaginatedSubmissionProduct").Description("description")
-        async method(): Promise<Pagination<Submission<Product>> | null> {
+        method(): Promise<Pagination<Submission<Product>> | null> {
           return null;
         }
       }

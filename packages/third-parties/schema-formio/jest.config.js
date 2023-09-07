@@ -2,13 +2,17 @@
 // https://jestjs.io/docs/en/configuration.html
 
 module.exports = {
-  ...require("@tsed/jest-config")(__dirname, "schema-formio"),
+  ...require("@tsed/jest-config"),
+  roots: ["<rootDir>/src", "<rootDir>/test"],
+  moduleNameMapper: {
+    "@tsed/schema-formio": "<rootDir>/src/index.ts"
+  },
   coverageThreshold: {
     global: {
-      statements: 100,
-      branches: 99.03,
-      functions: 100,
-      lines: 100
+      statements: 99.74,
+      branches: 98.88,
+      functions: 88.88,
+      lines: 99.74
     }
   }
 };

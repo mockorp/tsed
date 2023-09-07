@@ -1,26 +1,31 @@
 import {PlatformTest} from "@tsed/common";
+import filedirname from "filedirname";
 
 import {ViteService} from "../services/ViteService";
 import {ViteRendererMiddleware} from "./ViteRendererMiddleware";
 
+// FIXME remove when esm is ready
+const [, rootDir] = filedirname();
+
 describe("ViteRenderMiddleware", () => {
-  beforeEach(() =>
-    PlatformTest.create({
-      vite: {
-        root: __dirname
-      }
-    })
-  );
-  afterEach(() => PlatformTest.reset());
   describe("use()", () => {
+    beforeEach(() =>
+      PlatformTest.create({
+        vite: {
+          root: rootDir
+        }
+      })
+    );
+    afterEach(() => PlatformTest.reset());
     it("should return the response", async () => {
       const viteService = {
         render: jest.fn()
       };
 
       const $ctx = PlatformTest.createRequestContext();
+      jest.spyOn($ctx.response, "body");
 
-      viteService.render.mockResolvedValue({statusCode: 200, nothingRendered: false, renderResult: "result"});
+      viteService.render.mockResolvedValue("result");
 
       const middleware = await PlatformTest.invoke<ViteRendererMiddleware>(ViteRendererMiddleware, [
         {
@@ -31,7 +36,8 @@ describe("ViteRenderMiddleware", () => {
 
       await middleware.use($ctx);
 
-      expect(viteService.render).toHaveBeenCalledWith("*", $ctx);
+      expect(viteService.render).toHaveBeenCalledWith("*", {$ctx});
+      expect($ctx.response.body).toHaveBeenCalledWith("result");
     });
   });
 });

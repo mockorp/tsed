@@ -1,7 +1,7 @@
-import {getSpec, In, JsonEntityStore, Name, OperationPath, Path, SpecTypes} from "@tsed/schema";
+import {execMapper, getSpec, In, JsonEntityStore, Name, OperationPath, Path, SpecTypes} from "../../index";
 
 describe("In", () => {
-  it("should declare all schema correctly (param)", async () => {
+  it("should declare all schema correctly (param)", () => {
     // WHEN
     class Controller {
       method(@In("path") @Name("basic") basic: string) {}
@@ -14,7 +14,7 @@ describe("In", () => {
 
     const paramSchema = JsonEntityStore.from(Controller, "method", 0);
     const methodSchema = paramSchema.parent;
-    const operation = methodSchema.operation!.toJSON({});
+    const operation = execMapper("operation", methodSchema.operation, {});
 
     expect(operation).toEqual({
       parameters: [
@@ -34,7 +34,7 @@ describe("In", () => {
       }
     });
   });
-  it("should declare all schema correctly (method)", async () => {
+  it("should declare all schema correctly (method)", () => {
     // WHEN
     class Controller {
       @In("header").Type(String).Name("Authorization").Required().Description("description")
@@ -48,7 +48,7 @@ describe("In", () => {
 
     const paramSchema = JsonEntityStore.from(Controller, "method", 0);
     const methodSchema = paramSchema.parent;
-    const operation = methodSchema.operation!.toJSON({});
+    const operation = execMapper("operation", methodSchema.operation, {});
 
     expect(operation).toEqual({
       parameters: [
@@ -77,7 +77,7 @@ describe("In", () => {
       }
     });
   });
-  it("should declare all schema correctly (class)", async () => {
+  it("should declare all schema correctly (class)", () => {
     // WHEN
     class Controller {
       @In("header").Type(String).Name("Authorization").Required().Description("description")
@@ -91,7 +91,7 @@ describe("In", () => {
 
     const paramSchema = JsonEntityStore.from(Controller, "method", 0);
     const methodSchema = paramSchema.parent;
-    const operation = methodSchema.operation!.toJSON({});
+    const operation = execMapper("operation", methodSchema.operation, {});
 
     expect(operation).toEqual({
       parameters: [
@@ -120,7 +120,7 @@ describe("In", () => {
       }
     });
   });
-  it("should extra schema", async () => {
+  it("should extra schema", () => {
     // WHEN
     @Path("/:parentId")
     @In("path")
@@ -141,7 +141,7 @@ describe("In", () => {
 
     const paramSchema = JsonEntityStore.from(Controller, "method", 0);
     const methodSchema = paramSchema.parent;
-    const operation = methodSchema.operation!.toJSON({
+    const operation = execMapper("operation", methodSchema.operation!, {
       specType: SpecTypes.OPENAPI
     });
 

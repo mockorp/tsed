@@ -1,6 +1,7 @@
 import {
   createContext,
   InjectorService,
+  PlatformProvider,
   PlatformAdapter,
   PlatformApplication,
   PlatformBuilder,
@@ -12,7 +13,7 @@ import {
   PlatformStaticsOptions,
   runInContext
 } from "@tsed/common";
-import {Env, isFunction, nameOf, Type} from "@tsed/core";
+import {Env, isFunction, Type} from "@tsed/core";
 import {PlatformHandlerMetadata, PlatformLayer} from "@tsed/platform-router";
 import type {PlatformViews} from "@tsed/platform-views";
 import {OptionsJson, OptionsText, OptionsUrlencoded} from "body-parser";
@@ -49,7 +50,10 @@ declare global {
  * @platform
  * @express
  */
+@PlatformProvider()
 export class PlatformExpress implements PlatformAdapter<Express.Application> {
+  static readonly NAME = "express";
+
   readonly providers = [];
   #multer: typeof multer;
 
@@ -74,28 +78,11 @@ export class PlatformExpress implements PlatformAdapter<Express.Application> {
    * @param module
    * @param settings
    */
-  static async bootstrap(module: Type<any>, settings: Partial<TsED.Configuration> = {}) {
+  static bootstrap(module: Type<any>, settings: Partial<TsED.Configuration> = {}) {
     return PlatformBuilder.bootstrap<Express.Application>(module, {
       ...settings,
       adapter: PlatformExpress
     });
-  }
-
-  onInit() {
-    const middlewares = this.injector.settings.get("middlewares", []);
-
-    this.injector.settings.set(
-      "middlewares",
-      middlewares.filter((middleware) => {
-        const name = nameOf(middleware);
-        if (["textParser", "jsonParser", "rawParser", "urlencodedParser"].includes(name)) {
-          this.injector.settings.set(`express.bodyParser.${name.replace("Parser", "")}`, () => middleware);
-          return false;
-        }
-
-        return true;
-      })
-    );
   }
 
   async beforeLoadRoutes() {
@@ -108,7 +95,7 @@ export class PlatformExpress implements PlatformAdapter<Express.Application> {
     await this.configureViewsEngine();
   }
 
-  async afterLoadRoutes() {
+  afterLoadRoutes() {
     const app = this.injector.get<PlatformApplication<Express.Application>>(PlatformApplication)!;
     const platformExceptions = this.injector.get<PlatformExceptions>(PlatformExceptions)!;
 
@@ -123,6 +110,8 @@ export class PlatformExpress implements PlatformAdapter<Express.Application> {
       const {$ctx} = req;
       !$ctx.isDone() && platformExceptions?.catch(err, $ctx);
     });
+
+    return Promise.resolve();
   }
 
   mapLayers(layers: PlatformLayer[]) {
@@ -146,7 +135,7 @@ export class PlatformExpress implements PlatformAdapter<Express.Application> {
       case PlatformHandlerType.RAW_ERR_FN:
         return handler;
       case PlatformHandlerType.ERR_MIDDLEWARE:
-        return async (error: unknown, req: any, res: any, next: any) => {
+        return (error: unknown, req: any, res: any, next: any) => {
           return runInContext(req.$ctx, () => {
             const {$ctx} = req;
 
@@ -173,7 +162,7 @@ export class PlatformExpress implements PlatformAdapter<Express.Application> {
     this.injector.logger.debug("Mount app context");
 
     app.use(async (request: any, response: any, next: any) => {
-      const $ctx = await invoke({request, response});
+      const $ctx = invoke({request, response});
       await $ctx.start();
 
       $ctx.response.getRes().on("finish", () => $ctx.finish());
@@ -195,7 +184,6 @@ export class PlatformExpress implements PlatformAdapter<Express.Application> {
 
   multipart(options: PlatformMulterSettings): PlatformMulter {
     const m = this.#multer(options);
-
     const makePromise = (multer: any, name: string) => {
       // istanbul ignore next
       if (!multer[name]) return;
@@ -203,7 +191,7 @@ export class PlatformExpress implements PlatformAdapter<Express.Application> {
       const fn = multer[name];
 
       multer[name] = function apply(...args: any[]) {
-        const middleware = Reflect.apply(fn, this, args);
+        const middleware: any = Reflect.apply(fn, this, args);
 
         return (req: any, res: any) => promisify(middleware)(req, res);
       };
@@ -224,8 +212,9 @@ export class PlatformExpress implements PlatformAdapter<Express.Application> {
     return staticsMiddleware(root, props);
   }
 
-  bodyParser(type: "json" | "raw" | "text" | "urlencoded", additionalOptions: any = {}): any {
+  bodyParser(type: "json" | "text" | "urlencoded", additionalOptions: any = {}): any {
     const opts = this.injector.settings.get(`express.bodyParser.${type}`);
+
     let parser: any = Express[type];
     let options: OptionsJson & OptionsText & OptionsUrlencoded = {};
 
@@ -234,14 +223,19 @@ export class PlatformExpress implements PlatformAdapter<Express.Application> {
       options = {};
     }
 
-    switch (type) {
-      case "urlencoded":
-        options.extended = true;
-        break;
-      case "raw":
-        options.type = () => true;
-        break;
+    if (type === "urlencoded") {
+      options.extended = true;
     }
+
+    options.verify = (req: IncomingMessage & {rawBody: Buffer}, _res: ServerResponse, buffer: Buffer) => {
+      const rawBody = this.injector.settings.get(`rawBody`);
+
+      if (rawBody) {
+        req.rawBody = buffer;
+      }
+
+      return true;
+    };
 
     return parser({...options, ...additionalOptions});
   }

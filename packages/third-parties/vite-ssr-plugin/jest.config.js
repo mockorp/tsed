@@ -2,8 +2,13 @@
 // https://jestjs.io/docs/en/configuration.html
 
 module.exports = {
-  ...require("@tsed/jest-config")(__dirname, "vite-ssr-plugin"),
+  ...require("@tsed/jest-config"),
   coverageThreshold: {
-    global: require("./coverage.json")
+    global: {
+      statements: 100,
+      branches: 79.41,
+      functions: 100,
+      lines: 100
+    }
   }
 };

@@ -1,10 +1,12 @@
 import {
+  ancestorsOf,
   classOf,
   decoratorTypeOf,
   DecoratorTypes,
   descriptorOf,
   isArrayOrArrayClass,
   isClass,
+  isClassObject,
   isCollection,
   isDate,
   isObject,
@@ -15,11 +17,11 @@ import {
   Store,
   Type
 } from "@tsed/core";
-import type {JsonSchema} from "./JsonSchema";
-import type {JsonMethodStore} from "./JsonMethodStore";
 import type {JsonClassStore} from "./JsonClassStore";
-import type {JsonPropertyStore} from "./JsonPropertyStore";
+import type {JsonMethodStore} from "./JsonMethodStore";
 import type {JsonParameterStore} from "./JsonParameterStore";
+import type {JsonPropertyStore} from "./JsonPropertyStore";
+import type {JsonSchema} from "./JsonSchema";
 
 /**
  * @ignore
@@ -95,9 +97,6 @@ export abstract class JsonEntityStore implements JsonEntityStoreOptions {
     this.parent = this;
   }
 
-  isGetterOnly() {
-    return isObject(this.descriptor) && !this.descriptor.value && this.descriptor.get && !this.descriptor.set;
-  }
   /**
    * Return the class name of the entity.
    * @returns {string}
@@ -106,49 +105,32 @@ export abstract class JsonEntityStore implements JsonEntityStoreOptions {
     return nameOf(this.token);
   }
 
-  /**
-   *
-   * @returns {boolean}
-   */
   get isCollection(): boolean {
     return !!this.collectionType;
   }
 
-  /**
-   *
-   * @returns {boolean}
-   */
   get isArray() {
     return isArrayOrArrayClass(this.collectionType);
   }
 
-  /**
-   *
-   * @returns {boolean}
-   */
+  get discriminatorAncestor(): JsonEntityStore | undefined {
+    const ancestors = ancestorsOf(this.target);
+    const ancestor = ancestors.find((ancestor) => JsonEntityStore.from(ancestor).schema.isDiscriminator);
+    return ancestor && JsonEntityStore.from(ancestor);
+  }
+
   get isPrimitive() {
     return isPrimitiveOrPrimitiveClass(this._type);
   }
 
-  /**
-   *
-   * @returns {boolean}
-   */
   get isDate() {
     return isDate(this.computedType);
   }
 
-  /**
-   *
-   * @returns {boolean}
-   */
   get isObject() {
     return isObject(this.computedType);
   }
 
-  /**
-   *
-   */
   get isClass() {
     return isClass(this.computedType);
   }
@@ -168,10 +150,6 @@ export abstract class JsonEntityStore implements JsonEntityStoreOptions {
     this.schema.nestedGenerics = nestedGenerics;
   }
 
-  /**
-   *
-   * @returns {Type<any>}
-   */
   get type(): Type<any> | any {
     return this._type;
   }
@@ -201,19 +179,24 @@ export abstract class JsonEntityStore implements JsonEntityStoreOptions {
     return this.parent.schema;
   }
 
-  /**
-   *
-   * @param target
-   */
+  get isDiscriminatorChild() {
+    return this.schema.isDiscriminator && this.discriminatorAncestor?.schema.discriminator().base !== this.target;
+  }
+
   static from<T extends JsonClassStore = JsonClassStore>(target: Type<any>): T;
+
   static from<T extends JsonPropertyStore = JsonPropertyStore>(target: Type<any> | any, propertyKey: string | symbol): T;
+
   static from<T extends JsonParameterStore = JsonParameterStore>(target: Type<any> | any, propertyKey: string | symbol, index: number): T;
+
   static from<T extends JsonMethodStore = JsonMethodStore>(
     target: Type<any> | any,
     propertyKey: string | symbol,
     descriptor: PropertyDescriptor
   ): T;
+
   static from<T extends JsonEntityStore = JsonEntityStore>(...args: any[]): T;
+
   static from<T extends JsonEntityStore = JsonEntityStore>(...args: any[]): T {
     if (args[0].isStore) {
       return args[0] as T;
@@ -257,12 +240,24 @@ export abstract class JsonEntityStore implements JsonEntityStoreOptions {
     return this.from<T>(target, propertyKey, descriptorOf(target, propertyKey));
   }
 
+  static get(target: Type<any>, propertyKey: string | symbol, descriptor?: any) {
+    return JsonEntityStore.from(prototypeOf(target), propertyKey, descriptor);
+  }
+
+  isGetterOnly() {
+    return isObject(this.descriptor) && !this.descriptor.value && this.descriptor.get && !this.descriptor.set;
+  }
+
   get<T = any>(key: string, defaultValue?: any) {
     return this.store.get<T>(key, defaultValue);
   }
 
   set(key: string, value?: any) {
     return this.store.set(key, value);
+  }
+
+  toString() {
+    return [this.targetName, this.propertyName, this.index].filter((o) => o !== undefined).join(":");
   }
 
   protected abstract build(): void;
@@ -280,11 +275,11 @@ export abstract class JsonEntityStore implements JsonEntityStoreOptions {
     }
   }
 
-  toString() {
-    return [this.targetName, this.propertyName, this.index].filter((o) => o !== undefined).join(":");
-  }
-
-  static get(target: Type<any>, propertyKey: string | symbol, descriptor?: any) {
-    return JsonEntityStore.from(prototypeOf(target), propertyKey, descriptor);
+  getBestType() {
+    return this.itemSchema.isDiscriminator
+      ? this.itemSchema.discriminator()
+      : isClassObject(this.type)
+      ? this.itemSchema.getTarget()
+      : this.type;
   }
 }

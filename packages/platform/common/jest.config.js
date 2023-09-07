@@ -2,8 +2,17 @@
 // https://jestjs.io/docs/en/configuration.html
 
 module.exports = {
-  ...require("@tsed/jest-config")(__dirname, "common"),
+  ...require("@tsed/jest-config"),
+  roots: ["<rootDir>/src", "<rootDir>/test"],
+  moduleNameMapper: {
+    "^@tsed/common$": "<rootDir>/src/index.ts"
+  },
   coverageThreshold: {
-    global: require("./coverage.json")
+    global: {
+      statements: 98.05,
+      branches: 90.32,
+      functions: 97.08,
+      lines: 98.05
+    }
   }
 };

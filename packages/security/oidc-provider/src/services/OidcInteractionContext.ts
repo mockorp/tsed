@@ -2,7 +2,9 @@ import {Constant, InjectContext, PlatformContext} from "@tsed/common";
 import {Env} from "@tsed/core";
 import {Inject, Injectable} from "@tsed/di";
 import {Unauthorized} from "@tsed/exceptions";
-import {Account, InteractionResults, PromptDetail, Provider} from "oidc-provider";
+import {serialize} from "@tsed/json-mapper";
+// @ts-ignore
+import type {Account, InteractionResults, PromptDetail, default as Provider} from "oidc-provider";
 import {
   INTERACTION_CONTEXT,
   INTERACTION_DETAILS,
@@ -13,9 +15,8 @@ import {
   INTERACTION_UID
 } from "../constants/constants";
 import {OidcSession} from "../decorators/oidcSession";
-import {OidcClient} from "../domain/interfaces";
+import {OidcClient, OidcInteraction} from "../domain/interfaces";
 import {OidcBadInteractionName} from "../domain/OidcBadInteractionName";
-import {OidcInteraction} from "../domain/OidcInteraction";
 import {OidcInteractionPromptProps} from "../domain/OidcInteractionPromptProps";
 import {debug} from "../utils/debug";
 import {OidcInteractions} from "./OidcInteractions";
@@ -90,19 +91,34 @@ export class OidcInteractionContext {
     return raw;
   }
 
-  async interactionFinished(result: InteractionResults, options: {mergeWithLastSubmission?: boolean} = {mergeWithLastSubmission: false}) {
+  interactionFinished(
+    result: InteractionResults,
+    options: {
+      mergeWithLastSubmission?: boolean;
+    } = {mergeWithLastSubmission: false}
+  ) {
     return this.oidcProvider.get().interactionFinished(this.$ctx.getReq(), this.$ctx.getRes(), result, options);
   }
 
-  async interactionResult(result: InteractionResults, options: {mergeWithLastSubmission?: boolean} = {mergeWithLastSubmission: false}) {
+  interactionResult(
+    result: InteractionResults,
+    options: {
+      mergeWithLastSubmission?: boolean;
+    } = {mergeWithLastSubmission: false}
+  ) {
     return this.oidcProvider.get().interactionResult(this.$ctx.getReq(), this.$ctx.getRes(), result, options);
   }
 
-  async interactionPrompt(options: Record<string, any>): Promise<OidcInteractionPromptProps> {
-    const client = await this.findClient();
+  async interactionPrompt({client, ...options}: Record<string, any>): Promise<OidcInteractionPromptProps> {
+    client = client || (await this.findClient());
+
+    const newClient = serialize(client, {useAlias: false, groups: ["render"]});
+
+    // remove client secret from
+    delete (newClient as any).clientSecret;
 
     return {
-      client,
+      client: newClient,
       uid: this.uid,
       grantId: this.grantId,
       details: this.prompt.details,
@@ -115,27 +131,27 @@ export class OidcInteractionContext {
     };
   }
 
-  async render(view: string, result: any): Promise<string> {
+  render(view: string, result: any): Promise<string> {
     return this.$ctx.response.render(view, result);
   }
 
-  async save(ttl: number): Promise<string> {
+  save(ttl: number): Promise<string> {
     return this.raw.save(ttl);
   }
 
-  async findClient(clientId: string = this.params.client_id): Promise<OidcClient | undefined> {
+  findClient(clientId: string = this.params.client_id): Promise<OidcClient | undefined> {
     const key = `$client:${clientId}`;
 
     return this.$ctx.cacheAsync(key, () => this.oidcProvider.get().Client.find(clientId));
   }
 
-  async findAccount(sub?: string, token?: any): Promise<Account | undefined> {
+  findAccount(sub?: string, token?: any): Promise<Account | undefined> {
     if (!sub && this.session) {
       sub = this.session?.accountId as any;
     }
 
     if (!sub) {
-      return;
+      return Promise.resolve(undefined);
     }
 
     const key = `$account:${sub}`;
@@ -145,19 +161,21 @@ export class OidcInteractionContext {
     }) as any);
   }
 
-  async getGrant(): Promise<InstanceType<Provider["Grant"]>> {
+  getGrant(): Promise<InstanceType<Provider["Grant"]>> {
     const {Grant} = this.oidcProvider.get() as any;
 
     if (this.grantId) {
       // we'll be modifying existing grant in existing session
       // @ts-ignore
-      return await Grant.find(this.grantId);
+      return Grant.find(this.grantId);
     }
 
-    return new Grant({
-      accountId: this.session?.accountId,
-      clientId: this.params.client_id
-    });
+    return Promise.resolve(
+      new Grant({
+        accountId: this.session?.accountId,
+        clientId: this.params.client_id
+      })
+    );
   }
 
   checkInteractionName(name: string) {

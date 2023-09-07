@@ -1,7 +1,7 @@
 import {Controller, Get, PlatformContext, PlatformTest, QueryParams, ResponseFilter, ResponseFilterMethods} from "@tsed/common";
 import {isString} from "@tsed/core";
 import {OnDeserialize} from "@tsed/json-mapper";
-import {PlatformTestUtils} from "@tsed/platform-test-utils";
+import {PlatformTestSdk} from "@tsed/platform-test-sdk";
 import {
   array,
   CollectionOf,
@@ -21,7 +21,7 @@ import {
 } from "@tsed/schema";
 import qs from "querystring";
 import SuperTest from "supertest";
-import {PlatformExpress} from "../src";
+import {PlatformExpress} from "../src/index";
 import {rootDir, Server} from "./app/Server";
 
 class Pageable {
@@ -91,7 +91,7 @@ class Product {
   }
 }
 
-const utils = PlatformTestUtils.create({
+const utils = PlatformTestSdk.create({
   rootDir,
   platform: PlatformExpress,
   server: Server
@@ -102,7 +102,7 @@ class TestPageableCtrl {
   @Get("/")
   @Returns(206, Pagination).Of(Product).Title("PaginatedProduct")
   @Returns(200, Pagination).Of(Product).Title("PaginatedProduct")
-  async get(@QueryParams() pageableOptions: Pageable, @QueryParams("all") all: boolean) {
+  get(@QueryParams() pageableOptions: Pageable, @QueryParams("all") all: boolean) {
     return new Pagination<Product>({
       data: [
         new Product({
@@ -157,7 +157,7 @@ describe("Pageable", () => {
     request = SuperTest(PlatformTest.callback());
   });
 
-  it("should generate spec", async () => {
+  it("should generate spec", () => {
     const spec = getSpec(TestPageableCtrl, {specType: SpecTypes.OPENAPI});
     expect(spec).toEqual({
       paths: {

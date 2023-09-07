@@ -12,7 +12,9 @@ meta:
 
 ## TypeORM v0.3.x
 
-::: warning TypeORM v0.3.x is available and change the way on how to create connection (DataSource). His new API,
+::: warning
+
+TypeORM v0.3.x is available and change the way on how to create connection (DataSource). His new API,
 doesn't require to install the dedicated Ts.ED module. If you come from v0.2.0, keep the Ts.ED module installed and
 change the connection by DataSource and update your repositories' implementation.
 
@@ -197,7 +199,7 @@ import {DataSource} from "typeorm";
 import {MySqlDataSource} from "../datasources/MySqlDataSource";
 import {User} from "../entities/User";
 
-export const UserRepository = MySqlDataSource.getRepository(User).extends({
+export const UserRepository = MySqlDataSource.getRepository(User).extend({
   findByName(firstName: string, lastName: string) {
     return this.createQueryBuilder("user")
       .where("user.firstName = :firstName", {firstName})
@@ -259,7 +261,9 @@ Then import `@tsed/typeorm` in your Server:
 
 <<< @/tutorials/snippets/typeorm/typeorm-configuration.ts
 
-::: warning Don't forget to import the TypeORM module in the Server. Ts.ED need it to load correctly the TypeORM DI,
+::: warning
+
+Don't forget to import the TypeORM module in the Server. Ts.ED need it to load correctly the TypeORM DI,
 entities and repositories!
 :::
 

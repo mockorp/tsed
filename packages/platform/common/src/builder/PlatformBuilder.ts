@@ -1,6 +1,6 @@
-import {nameOf, Type} from "@tsed/core";
-import {colors, InjectorService, ProviderOpts, runInContext, setLoggerConfiguration, TokenProvider} from "@tsed/di";
-import {getMiddlewaresForHook} from "@tsed/platform-middlewares";
+import {isFunction, isString, nameOf, Type} from "@tsed/core";
+import {colors, InjectorService, ProviderOpts, setLoggerConfiguration, TokenProvider} from "@tsed/di";
+import {getMiddlewaresForHook, PlatformMiddlewareLoadingOptions} from "@tsed/platform-middlewares";
 import {PlatformLayer} from "@tsed/platform-router";
 import type {IncomingMessage, Server, ServerResponse} from "http";
 import type Https from "https";
@@ -37,11 +37,10 @@ export class PlatformBuilder<App = TsED.Application> {
     this.#rootModule = module;
 
     const configuration = getConfiguration(settings, module);
-    const adapterKlass: Type<PlatformAdapter<App>> = adapter || (PlatformBuilder.adapter as any);
-    const name = nameOf(adapterKlass).replace("Platform", "").toLowerCase();
+    const adapterKlass: Type<PlatformAdapter<App>> & {NAME: string} = adapter || (PlatformBuilder.adapter as any);
 
-    configuration.PLATFORM_NAME = name;
-    this.name = name;
+    configuration.PLATFORM_NAME = adapterKlass.NAME;
+    this.name = adapterKlass.NAME;
 
     this.#injector = createInjector({
       adapter: adapterKlass,
@@ -82,7 +81,6 @@ export class PlatformBuilder<App = TsED.Application> {
    *
    * ```typescript
    * @Configuration({
-   *    rootDir: Path.resolve(__dirname),
    *    port: 8000,
    *    httpsPort: 8080,
    *    mount: {
@@ -127,7 +125,7 @@ export class PlatformBuilder<App = TsED.Application> {
    * @param module
    * @param settings
    */
-  static async bootstrap<App = TsED.Application>(module: Type<any>, settings: PlatformBuilderSettings<App>) {
+  static bootstrap<App = TsED.Application>(module: Type<any>, settings: PlatformBuilderSettings<App>) {
     return this.build<App>(module, settings).bootstrap();
   }
 
@@ -183,6 +181,8 @@ export class PlatformBuilder<App = TsED.Application> {
 
   public async runLifecycle() {
     setLoggerConfiguration(this.injector);
+
+    await this.mapTokenMiddlewares();
 
     await this.loadInjector();
 
@@ -252,7 +252,7 @@ export class PlatformBuilder<App = TsED.Application> {
     await injector.emit(hook, ...args);
   }
 
-  async loadStatics(hook: string): Promise<void> {
+  loadStatics(hook: string) {
     const statics = this.settings.get<PlatformStaticsSettings>("statics");
 
     getStaticsOptions(statics).forEach(({path, options}) => {
@@ -268,7 +268,7 @@ export class PlatformBuilder<App = TsED.Application> {
     return this;
   }
 
-  async bootstrap() {
+  bootstrap(): Promise<this> {
     this.#promise = this.#promise || this.runLifecycle();
 
     return this.#promise;
@@ -308,10 +308,18 @@ export class PlatformBuilder<App = TsED.Application> {
     await this.mapRouters();
   }
 
-  protected async mapRouters() {
+  protected mapRouters() {
     const layers = this.platform.getLayers();
 
     this.#adapter.mapLayers(layers);
+
+    const rawBody =
+      this.settings.get("rawBody") ||
+      layers.some(({handlers}) => {
+        return handlers.some((handler) => handler.opts?.paramsTypes?.RAW_BODY);
+      });
+
+    this.settings.set("rawBody", rawBody);
 
     return this.logRoutes(layers.filter((layer) => layer.isProvider()));
   }
@@ -361,5 +369,47 @@ export class PlatformBuilder<App = TsED.Application> {
 
       logger.info(printRoutes(await this.injector.alterAsync("$logRoutes", routes)));
     }
+  }
+
+  protected async mapTokenMiddlewares() {
+    let middlewares = this.injector.settings.get<PlatformMiddlewareLoadingOptions[]>("middlewares", []);
+    const {env} = this.injector.settings;
+    const defaultHook = "$beforeRoutesInit";
+
+    const promises = middlewares.map(async (middleware: PlatformMiddlewareLoadingOptions): Promise<PlatformMiddlewareLoadingOptions> => {
+      if (isFunction(middleware)) {
+        return {
+          env,
+          hook: defaultHook,
+          use: middleware
+        };
+      }
+
+      if (isString(middleware)) {
+        middleware = {env, use: middleware, hook: defaultHook};
+      }
+
+      let {use, options} = middleware;
+
+      if (isString(use)) {
+        if (["text-parser", "raw-parser", "json-parser", "urlencoded-parser"].includes(use)) {
+          use = this.adapter.bodyParser(use.replace("-parser", ""), options);
+        } else {
+          const mod = await import(use);
+          use = (mod.default || mod)(options);
+        }
+      }
+
+      return {
+        env,
+        hook: defaultHook,
+        ...middleware,
+        use
+      };
+    });
+
+    middlewares = await Promise.all(promises);
+
+    this.injector.settings.set("middlewares", middlewares);
   }
 }

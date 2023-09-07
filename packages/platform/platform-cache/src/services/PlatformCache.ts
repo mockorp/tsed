@@ -1,10 +1,15 @@
-import {isClass, isFunction, isString} from "@tsed/core";
+import {isClass, isFunction, isString, nameOf, Type} from "@tsed/core";
 import {Configuration, Inject, InjectorService, Module} from "@tsed/di";
 import {deserialize, JsonDeserializerOptions, serialize} from "@tsed/json-mapper";
 import {Logger} from "@tsed/logger";
+import {JsonEntityStore} from "@tsed/schema";
+import {AsyncLocalStorage} from "async_hooks";
 import type {Cache, CachingConfig, MultiCache} from "cache-manager";
+import {prefix} from "concurrently/dist/src/defaults";
 import {PlatformCacheSettings} from "../interfaces/interfaces";
 import {PlatformCachedObject} from "../interfaces/PlatformCachedObject";
+import {getInterceptorOptions} from "../utils/getInterceptorOptions";
+import {getPrefix} from "../utils/getPrefix";
 
 const defaultKeyResolver = (args: any[]) => {
   return args.map((arg: any) => (isClass(arg) ? JSON.stringify(serialize(arg)) : arg)).join(":");
@@ -12,6 +17,8 @@ const defaultKeyResolver = (args: any[]) => {
 
 export type CacheManager = Cache | MultiCache;
 export type Ttl = number | ((result: any) => number);
+
+const storage: AsyncLocalStorage<{forceRefresh: boolean}> = new AsyncLocalStorage();
 
 /**
  * @platform
@@ -43,6 +50,12 @@ export class PlatformCache {
     }
   }
 
+  getKeysOf(target: Type<any>, propertyKey: string | symbol) {
+    const prefix = getPrefix(target, propertyKey);
+
+    return this.keys(`${prefix.join(":")}:*`);
+  }
+
   disabled(): boolean {
     return !this.settings.get<PlatformCacheSettings>("cache");
   }
@@ -61,10 +74,12 @@ export class PlatformCache {
     return isFunction(ttl) ? ttl(result) : ttl;
   }
 
-  async ttl(key: string) {
+  ttl(key: string) {
     if (this.cache && "store" in this.cache && this.cache.store.ttl) {
       return this.cache.store.ttl(key);
     }
+
+    return Promise.resolve();
   }
 
   wrap<T>(key: string, fetch: () => Promise<T>, ttl?: number): Promise<T> {
@@ -75,8 +90,8 @@ export class PlatformCache {
     return this.cache?.wrap<T>(key, fetch, ttl);
   }
 
-  async get<T>(key: string, options: JsonDeserializerOptions = {}): Promise<T | undefined> {
-    return deserialize(this.cache?.get<T>(key), options);
+  get<T>(key: string, options: JsonDeserializerOptions = {}): Promise<T | undefined> {
+    return Promise.resolve(deserialize(this.cache?.get<T>(key), options));
   }
 
   async set<T>(key: string, value: any, options?: CachingConfig<T>): Promise<T | undefined> {
@@ -126,15 +141,26 @@ export class PlatformCache {
     await this.cache?.reset();
   }
 
-  async keys(...args: any[]): Promise<string[]> {
+  keys(...args: any[]): Promise<string[]> {
     if (this.cache && "store" in this.cache && this.cache.store.keys) {
       return this.cache.store.keys(...args);
     }
 
-    // istanbul ignore next
-    return [];
+    return Promise.resolve([]);
   }
 
+  async deleteKeys(patterns: string): Promise<string[]> {
+    const keys = await this.keys(patterns);
+
+    await Promise.all(keys.map((key: string) => this.del(key)));
+
+    return keys;
+  }
+
+  /**
+   * Use micromatch instead native patterns. Use this method if the native store method doesn't support glob patterns
+   * @param patterns
+   */
   async getMatchingKeys(patterns: string): Promise<string[]> {
     const [keys, {default: micromatch}] = await Promise.all([this.keys(), import("micromatch")]);
 
@@ -149,6 +175,14 @@ export class PlatformCache {
     return keys;
   }
 
+  refresh(callback: () => Promise<any> | any) {
+    return storage.run({forceRefresh: true}, callback);
+  }
+
+  isForceRefresh() {
+    return !!storage.getStore()?.forceRefresh;
+  }
+
   protected async createCacheManager(settings: PlatformCacheSettings) {
     const {caches, store = "memory", ttl, ...props} = settings;
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
@@ -156,21 +190,15 @@ export class PlatformCache {
 
     return caches?.length
       ? multiCaching(caches)
-      : caching(await this.mapStore(store), {
+      : caching(this.mapStore(store), {
           ...props,
           ttl
         });
   }
 
-  private async mapStore(store: string | Function | {create: Function}) {
-    if (!isString(store)) {
-      if ("create" in store) {
-        store = store.create;
-      }
-
-      if (isFunction(store)) {
-        return await store();
-      }
+  private mapStore(store: "memory" | Function | {create: Function}): any {
+    if (!isString(store) && "create" in store) {
+      return store.create;
     }
 
     return store;

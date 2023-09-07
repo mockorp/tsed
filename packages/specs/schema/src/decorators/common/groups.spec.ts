@@ -1,19 +1,17 @@
-import {
-  CollectionOf,
-  getJsonSchema,
-  getSpec,
-  In,
-  Name,
-  OperationPath,
-  Path,
-  Property,
-  Required,
-  RequiredGroups,
-  Returns,
-  SpecTypes
-} from "@tsed/schema";
-import {Groups} from "./groups";
 import {QueryParams} from "@tsed/platform-params";
+import {SpecTypes} from "../../domain/SpecTypes";
+import {getJsonSchema} from "../../utils/getJsonSchema";
+import {getSpec} from "../../utils/getSpec";
+import {CollectionOf} from "../collections/collectionOf";
+import {In} from "../operations/in";
+import {OperationPath} from "../operations/operationPath";
+import {Path} from "../operations/path";
+import {Returns} from "../operations/returns";
+import {Groups} from "./groups";
+import {Name} from "./name";
+import {Property} from "./property";
+import {Required} from "./required";
+import {RequiredGroups} from "./requiredGroups";
 
 class ChildModel {
   @Groups("!creation")
@@ -414,13 +412,13 @@ describe("@Groups", () => {
       class MyController {
         @OperationPath("POST", "/")
         @Returns(201, MyModel).Groups("group.*")
-        async create(@In("body") @Groups("creation") payload: MyModel) {
+        create(@In("body") @Groups("creation") payload: MyModel) {
           return new MyModel();
         }
 
         @OperationPath("PUT", "/:id")
         @Returns(200, MyModel)
-        async update(@In("body") @Groups("group.*") payload: MyModel, @In("path") @Name("id") id: string) {
+        update(@In("body") @Groups("group.*") payload: MyModel, @In("path") @Name("id") id: string) {
           return new MyModel();
         }
       }
@@ -583,18 +581,38 @@ describe("@Groups", () => {
         ]
       });
     });
+    it("should display fields when a group match with - body and a group name (OS3)", () => {
+      @Path("/")
+      class MyController {
+        @OperationPath("POST", "/")
+        @Returns(201, MyModel).Groups("group.*")
+        create(@In("body") @Groups("CreatePayload", ["creation"]) payload: MyModel) {
+          return new MyModel();
+        }
+
+        @OperationPath("PUT", "/:id")
+        @Returns(200, MyModel)
+        update(@In("body") @Groups("Complete", "group.*") payload: MyModel, @In("path") @Name("id") id: string) {
+          return new MyModel();
+        }
+      }
+
+      const spec = getSpec(MyController, {specType: SpecTypes.OPENAPI});
+
+      expect(spec).toMatchSnapshot();
+    });
     it("should display fields when a group match with - query (OS3)", () => {
       @Path("/")
       class MyController {
         @OperationPath("GET", "/")
         @Returns(201, MyModel).Groups("group.*")
-        async get(@QueryParams() @Groups("creation") payload: MyModel) {
+        get(@In("query") @Groups("creation") payload: MyModel) {
           return new MyModel();
         }
 
         @OperationPath("GET", "/all")
         @Returns(201, MyModel).Groups("group.*")
-        async getWithout(@QueryParams() payload: MyModel) {
+        getWithout(@QueryParams() payload: MyModel) {
           return new MyModel();
         }
       }
@@ -764,7 +782,7 @@ describe("@Groups", () => {
       class MyController {
         @OperationPath("POST", "/")
         @Returns(201, Array).Of(MyModel).Groups("group.*")
-        async createWithArray(@In("body") @Groups("creation") @CollectionOf(MyModel) payload: MyModel[]) {
+        createWithArray(@In("body") @Groups("creation") @CollectionOf(MyModel) payload: MyModel[]) {
           return [new MyModel()];
         }
       }
@@ -875,6 +893,20 @@ describe("@Groups", () => {
           }
         ]
       });
+    });
+    it("should display fields when a group match with (array & groups - OS3)", () => {
+      @Path("/")
+      class MyController {
+        @OperationPath("POST", "/")
+        @Returns(201, Array).Of(MyModel).Groups("Details", ["group.*"])
+        createWithArray(@In("body") @Groups("Create", ["creation"]) @CollectionOf(MyModel) payload: MyModel[]) {
+          return [new MyModel()];
+        }
+      }
+
+      const spec = getSpec(MyController, {specType: SpecTypes.OPENAPI});
+
+      expect(spec).toMatchSnapshot();
     });
   });
 });

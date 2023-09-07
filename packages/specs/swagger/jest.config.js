@@ -2,12 +2,16 @@
 // https://jestjs.io/docs/en/configuration.html
 
 module.exports = {
-  ...require("@tsed/jest-config")(__dirname, "swagger"),
+  ...require("@tsed/jest-config"),
+  roots: ["<rootDir>/src", "<rootDir>/test"],
+  moduleNameMapper: {
+    "@tsed/swagger": "<rootDir>/src/index.ts"
+  },
   coverageThreshold: {
     global: {
       statements: 100,
-      branches: 88.37,
-      functions: 96.55,
+      branches: 88.73,
+      functions: 100,
       lines: 100
     }
   }

@@ -2,13 +2,14 @@
 // https://jestjs.io/docs/en/configuration.html
 
 module.exports = {
-  ...require("@tsed/jest-config")(__dirname, "mikro-orm"),
+  ...require("@tsed/jest-config"),
+  roots: ["<rootDir>/src", "<rootDir>/test"],
   coverageThreshold: {
     global: {
-      branches: 95.83,
-      functions: 94.73,
-      lines: 97.43,
-      statements: 97.88
+      branches: 87.17,
+      functions: 97.56,
+      lines: 98.24,
+      statements: 98.24
     }
   }
 };

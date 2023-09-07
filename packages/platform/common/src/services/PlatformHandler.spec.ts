@@ -2,10 +2,14 @@ import {catchAsyncError} from "@tsed/core";
 import {Injectable} from "@tsed/di";
 import {PlatformHandlerMetadata, PlatformHandlerType} from "@tsed/platform-router";
 import {EndpointMetadata, Get, View} from "@tsed/schema";
+import filedirname from "filedirname";
 import {createReadStream} from "fs";
 import {join} from "path";
 import {PlatformHandler} from "./PlatformHandler";
 import {PlatformTest} from "./PlatformTest";
+
+// FIXME remove when esm is ready
+const [, rootDir] = filedirname();
 
 function getServiceFixture() {
   const service = PlatformTest.get<PlatformHandler>(PlatformHandler);
@@ -78,8 +82,8 @@ describe("PlatformHandler", () => {
       @Injectable()
       class TestService {
         @View("test")
-        async use() {
-          return "hello";
+        use() {
+          return Promise.resolve("hello");
         }
       }
 
@@ -128,7 +132,7 @@ describe("PlatformHandler", () => {
 
       const $ctx = PlatformTest.createRequestContext();
       $ctx.next = jest.fn();
-      $ctx.data = createReadStream(join(__dirname, "__mock__/data.txt"));
+      $ctx.data = createReadStream(join(rootDir, "__mock__/data.txt"));
 
       await service.next($ctx);
 
@@ -203,8 +207,8 @@ describe("PlatformHandler", () => {
       @Injectable()
       class TestService {
         @Get("/")
-        async use() {
-          return "hello";
+        use() {
+          return Promise.resolve("hello");
         }
       }
 
@@ -241,8 +245,8 @@ describe("PlatformHandler", () => {
       @Injectable()
       class TestService {
         @Get("/")
-        async use() {
-          return "hello";
+        use() {
+          return Promise.resolve("hello");
         }
       }
 
@@ -271,13 +275,13 @@ describe("PlatformHandler", () => {
       @Injectable()
       class TestService {
         @Get("/")
-        async use() {
-          return "hello";
+        use() {
+          return Promise.resolve("hello");
         }
       }
 
       const {service} = getServiceFixture();
-      const data = createReadStream(join(__dirname, "__mock__/data.txt"));
+      const data = createReadStream(join(rootDir, "__mock__/data.txt"));
       const handler = jest.fn().mockResolvedValue(data);
 
       const $ctx = PlatformTest.createRequestContext();

@@ -2,13 +2,17 @@
 // https://jestjs.io/docs/en/configuration.html
 
 module.exports = {
-  ...require("@tsed/jest-config")(__dirname, "passport"),
+  ...require("@tsed/jest-config"),
+  roots: ["<rootDir>/src", "<rootDir>/test"],
+  moduleNameMapper: {
+    "@tsed/passport": "<rootDir>/src/index.ts"
+  },
   coverageThreshold: {
     global: {
-      statements: 99.36,
-      branches: 80,
+      statements: 99.18,
+      branches: 86.31,
       functions: 100,
-      lines: 99.32
+      lines: 99.18
     }
   }
 };

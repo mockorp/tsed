@@ -1,7 +1,8 @@
 import {MemoryAdapter} from "@tsed/adapters";
 import {PlatformTest} from "@tsed/common";
 import {PlatformExpress} from "@tsed/platform-express";
-import {PlatformTestUtils} from "@tsed/platform-test-utils";
+import {PlatformTestSdk} from "@tsed/platform-test-sdk";
+import filedirname from "filedirname";
 import SuperTest from "supertest";
 import {rootDir} from "../../../platform/platform-express/test/app/Server";
 import {InteractionsCtrl} from "./app/controllers/oidc/InteractionsCtrl";
@@ -10,7 +11,10 @@ import {Server} from "./app/Server";
 import {join} from "path";
 import {Accounts} from "./app/services/Accounts";
 
-const utils = PlatformTestUtils.create({
+// FIXME remove when esm is ready
+const [, testDir] = filedirname();
+
+const utils = PlatformTestSdk.create({
   rootDir,
   platform: PlatformExpress,
   server: Server,
@@ -22,13 +26,13 @@ const utils = PlatformTestUtils.create({
 describe("OIDC", () => {
   let request: SuperTest.SuperTest<SuperTest.Test>;
 
-  async function followRedirection(response: any, headers: any = {}) {
+  function followRedirection(response: any, headers: any = {}) {
     if (response.headers.location) {
       const url = response.headers.location.replace("http://0.0.0.0:8081", "");
       return request.get(url).set("Origin", "http://0.0.0.0:8081").set("Host", "0.0.0.0:8081").set(headers);
     }
 
-    return response;
+    return Promise.resolve(response);
   }
 
   beforeEach(
@@ -112,13 +116,13 @@ describe("OIDC", () => {
 describe("OIDC on a different path", () => {
   let request: SuperTest.SuperTest<SuperTest.Test>;
 
-  async function followRedirection(response: any, headers: any = {}) {
+  function followRedirection(response: any, headers: any = {}) {
     if (response.headers.location) {
       const url = response.headers.location.replace("http://0.0.0.0:8081", "");
       return request.get(url).set("Origin", "http://0.0.0.0:8081").set("Host", "0.0.0.0:8081").set(headers);
     }
 
-    return response;
+    return Promise.resolve(response);
   }
 
   beforeEach(
@@ -129,7 +133,7 @@ describe("OIDC on a different path", () => {
       oidc: {
         path: "/oidc",
         Accounts: Accounts,
-        jwksPath: join(__dirname, "..", "..", "keys", "jwks.json"),
+        jwksPath: join(testDir, "..", "..", "keys", "jwks.json"),
         clients: [
           {
             client_id: "client_id",

@@ -1,7 +1,7 @@
-import {PlatformTest} from "@tsed/common";
+import {PlatformTest, runInContext} from "@tsed/common";
 import {Env} from "@tsed/core";
-import {OidcProvider} from "@tsed/oidc-provider";
 import "../../test/app/controllers/oidc/InteractionsCtrl";
+import {OidcProvider} from "./OidcProvider";
 
 describe("OidcProvider", () => {
   describe("Production", () => {
@@ -23,7 +23,7 @@ describe("OidcProvider", () => {
       expect(oidcProvider.getInteractionsUrl()({}, {uid: "uid"})).toEqual("/interaction/uid");
     });
   });
-  describe("createPrompt()", () => {
+  describe("createErrorHandler()", () => {
     beforeEach(() =>
       PlatformTest.create({
         env: Env.PROD,
@@ -34,39 +34,77 @@ describe("OidcProvider", () => {
       })
     );
     afterEach(() => PlatformTest.reset());
-    it("should bind options to prompt instance", () => {
+
+    it("should intercept all oidc errors", () => {
       const oidcProvider = PlatformTest.get<OidcProvider>(OidcProvider);
-      const instance = {};
-      const options = {
-        name: "name",
-        requestable: true,
-        details: jest.fn(),
-        checks: []
-      };
+      jest.spyOn((oidcProvider as any).injector.logger, "error");
 
-      const prompt = oidcProvider.createPrompt(instance, options);
+      const fn = (oidcProvider as any).createErrorHandler("event");
+      fn(
+        {
+          headers: {
+            origin: "origin"
+          },
+          oidc: {
+            params: {
+              client_id: "client_id"
+            }
+          }
+        },
+        {error: "error", error_description: "error_description", error_detail: "error_detail"},
+        "account_id",
+        "sid"
+      );
 
-      expect(prompt.details).toEqual(options.details);
-      expect(prompt.name).toEqual(options.name);
-      expect(prompt.requestable).toEqual(options.requestable);
+      expect((oidcProvider as any).injector.logger.error).toHaveBeenCalledWith({
+        account_id: "account_id",
+        error: {error_description: "error_description", error_detail: "error_detail", error: "error"},
+        event: "OIDC_ERROR",
+        headers: {
+          origin: "origin"
+        },
+        params: {client_id: "client_id"},
+        sid: "sid",
+        type: "event"
+      });
     });
-
-    it("should bind methods from instance to prompt instance", () => {
+    it("should intercept all oidc errors (in request context)", async () => {
       const oidcProvider = PlatformTest.get<OidcProvider>(OidcProvider);
-      const instance = {
-        details: jest.fn(),
-        checks: jest.fn().mockReturnValue([])
-      };
-      const options = {
-        name: "name",
-        requestable: true
-      };
+      const ctx = PlatformTest.createRequestContext();
 
-      const prompt = oidcProvider.createPrompt(instance, options);
+      jest.spyOn(ctx.logger, "error");
 
-      expect(prompt.details).toBeDefined();
-      expect(prompt.name).toEqual(options.name);
-      expect(prompt.requestable).toEqual(options.requestable);
+      const fn = (oidcProvider as any).createErrorHandler("event");
+
+      await runInContext(ctx, () => {
+        fn(
+          {
+            headers: {
+              origin: "origin"
+            },
+            oidc: {
+              params: {
+                client_id: "client_id"
+              }
+            }
+          },
+          {error: "error", error_description: "error_description", error_detail: "error_detail"},
+          "account_id",
+          "sid"
+        );
+      });
+
+      expect(ctx.logger.error).toHaveBeenCalledWith({
+        account_id: "account_id",
+        error: {error_description: "error_description", error_detail: "error_detail", error: "error"},
+        event: "OIDC_ERROR",
+        headers: {
+          origin: "origin"
+        },
+        params: {client_id: "client_id"},
+        sid: "sid",
+        type: "event"
+      });
     });
   });
 });

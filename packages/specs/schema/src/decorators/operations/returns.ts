@@ -72,6 +72,11 @@ export interface ReturnsChainedDecorators {
   Of(...types: GenericValue[]): this;
 
   /**
+   * For the integer type
+   */
+  OfInteger(): this;
+
+  /**
    * Add the nested types
    * @param types
    */
@@ -130,6 +135,8 @@ export interface ReturnsChainedDecorators {
    */
   Groups(...groups: string[]): this;
 
+  Groups(groupName: string, groups: string[]): this;
+
   /**
    * Add a list of allowed groups to filter dynamically fields. Listed groups can be used by the consumer to change
    * the mapped response.
@@ -167,6 +174,7 @@ class ReturnDecoratorContext extends DecoratorContext<ReturnsChainedDecorators> 
     "type",
     "status",
     "of",
+    "ofInteger",
     "oneOf",
     "allOf",
     "anyOf",
@@ -234,8 +242,16 @@ class ReturnDecoratorContext extends DecoratorContext<ReturnsChainedDecorators> 
     return this;
   }
 
-  groups(...groups: string[]) {
-    this.set("groups", groups);
+  groups(groupName: string, groups: string[]): this;
+  groups(...groups: string[]): this;
+  groups(...groups: string[] | [string, string[]]) {
+    if (groups.length === 2 && isArray(groups[1])) {
+      this.set("groupsName", groups[0]);
+      this.set("groups", groups[1]);
+    } else {
+      this.set("groups", groups);
+    }
+
     return this;
   }
 
@@ -273,40 +289,20 @@ class ReturnDecoratorContext extends DecoratorContext<ReturnsChainedDecorators> 
     return this;
   }
 
+  ofInteger() {
+    return this.of("integer");
+  }
+
   oneOf(...types: (Type<any> | any)[]) {
-    const model = this.get("model");
-
-    this.addAction(() => {
-      const schema = this.get("schema") as JsonSchema;
-      schema.type(model);
-      schema.itemSchema({oneOf: types.map((type) => ({type}))});
-    });
-
-    return this;
+    return this.manyOf("oneOf", types);
   }
 
   allOf(...types: (Type<any> | any)[]) {
-    const model = this.get("model");
-
-    this.addAction(() => {
-      const schema = this.get("schema") as JsonSchema;
-      schema.type(model);
-      schema.itemSchema({allOf: types.map((type) => ({type}))});
-    });
-
-    return this;
+    return this.manyOf("allOf", types);
   }
 
   anyOf(...types: (Type<any> | any)[]) {
-    const model = this.get("model");
-
-    this.addAction(() => {
-      const schema = this.get("schema") as JsonSchema;
-      schema.type(model);
-      schema.itemSchema({anyOf: types.map((type) => ({type}))});
-    });
-
-    return this;
+    return this.manyOf("anyOf", types);
   }
 
   schema(partial: Partial<JsonSchemaObject>) {
@@ -413,6 +409,7 @@ class ReturnDecoratorContext extends DecoratorContext<ReturnsChainedDecorators> 
     const media = response.getMedia(contentType || "*/*");
     const schema = media.get("schema") || new JsonSchema({type: model});
     const groups = this.get("groups");
+    const groupsName = this.get("groupsName");
     const allowedGroups = this.get("allowedGroups");
     const operation = this.entity.operation!;
 
@@ -429,6 +426,7 @@ class ReturnDecoratorContext extends DecoratorContext<ReturnsChainedDecorators> 
     media.schema(schema);
 
     media.groups = groups;
+    media.groupsName = groupsName;
 
     if (allowedGroups) {
       media.allowedGroups = allowedGroups;
@@ -455,6 +453,24 @@ class ReturnDecoratorContext extends DecoratorContext<ReturnsChainedDecorators> 
     }
 
     return media;
+  }
+
+  private manyOf(kind: string, types: any[]) {
+    const model = this.get("model");
+
+    this.addAction(() => {
+      const schema = this.get("schema") as JsonSchema;
+
+      if (isCollection(model)) {
+        schema.type(model || Object);
+
+        schema.itemSchema().set(kind, types);
+      } else {
+        schema.set(kind, types);
+      }
+    });
+
+    return this;
   }
 }
 

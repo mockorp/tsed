@@ -1,15 +1,5 @@
 import {Type} from "@tsed/core";
-import "../components/anyMapper";
-import "../components/classMapper";
-import "../components/genericsMapper";
-import "../components/inheritedClassMapper";
-import "../components/itemMapper";
-import "../components/lazyRefMapper";
-import "../components/mapMapper";
-import "../components/objectMapper";
-import "../components/ofMapper";
-import "../components/propertiesMapper";
-import "../components/schemaMapper";
+import "../components/index";
 import type {JsonEntityStore} from "../domain/JsonEntityStore";
 import {SpecTypes} from "../domain/SpecTypes";
 import {JsonSchemaOptions} from "../interfaces/JsonSchemaOptions";
@@ -52,12 +42,13 @@ function get(entity: JsonEntityStore, options: any) {
 
 export function getJsonSchema(model: Type<any> | any, options: JsonSchemaOptions = {}) {
   const entity = getJsonEntityStore(model);
-
+  const specType = options.specType || SpecTypes.JSON;
   options = {
     endpoint: true,
     groups: [],
+    inlineEnums: specType === SpecTypes.JSON,
     ...options,
-    specType: options.specType || SpecTypes.JSON,
+    specType,
     schemas: {}
   };
 

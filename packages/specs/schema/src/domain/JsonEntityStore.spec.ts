@@ -9,7 +9,7 @@ import {
   Property,
   Required,
   Allow
-} from "@tsed/schema";
+} from "../index";
 
 describe("JsonEntityStore", () => {
   it("should create JsonEntityStore", () => {
@@ -37,6 +37,8 @@ describe("JsonEntityStore", () => {
     expect(storeClass.isPrimitive).toBe(false);
     expect(storeClass.isObject).toBe(false);
     expect(storeClass.isClass).toBe(true);
+    expect(storeClass.isDiscriminatorChild).toBe(false);
+    expect(storeClass.getBestType()).toBe(Model);
 
     // PROPERTY
     const storeProp = JsonEntityStore.from(Model).children.get("id") as JsonPropertyStore;
@@ -96,6 +98,7 @@ describe("JsonEntityStore", () => {
     expect(storeParam.isObject).toBe(false);
     expect(storeParam.isClass).toBe(false);
     expect(storeParam.isGetterOnly()).toBe(false);
+    expect(storeParam.toString()).toBe("Model:method:0");
   });
   it("should manage enum from babel", () => {
     enum MyEnum {

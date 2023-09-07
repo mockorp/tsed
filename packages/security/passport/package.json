@@ -1,6 +1,6 @@
 {
   "name": "@tsed/passport",
-  "version": "7.3.1",
+  "version": "7.35.0",
   "description": "Passport package for Ts.ED framework",
   "source": "./src/index.ts",
   "main": "./lib/cjs/index.js",
@@ -14,32 +14,36 @@
   },
   "scripts": {
     "clean": "rm -rf lib",
-    "build": "yarn clean && yarn barrels && yarn run build:esm && yarn run build:cjs",
-    "build:cjs": "tsc --build tsconfig.compile.json",
-    "build:esm": "tsc --build tsconfig.compile.esm.json",
+    "build": "yarn clean && yarn barrels && yarn build:ts",
     "barrels": "yarn barrelsby --delete -d ./src -e \"\\.spec\\.ts\" -e \"__mock__\" -e \".benchmark.ts\"",
-    "test": "cross-env NODE_ENV=test yarn jest --max-workers=2",
-    "start": "ts-node src/index.ts"
+    "test": "cross-env NODE_ENV=test yarn jest --max-workers=2 && jest-coverage-thresholds-bumper",
+    "start": "ts-node src/index.ts",
+    "build:ts": "tsc --build tsconfig.json && tsc --build tsconfig.esm.json",
+    "lint": "eslint '**/*.{ts,js}'",
+    "lint:fix": "eslint '**/*.{ts,js}' --fix"
   },
   "dependencies": {
-    "tslib": "2.4.0"
+    "tslib": "2.5.0"
   },
   "devDependencies": {
-    "@tsed/common": "7.3.1",
-    "@tsed/core": "7.3.1",
-    "@tsed/di": "7.3.1",
-    "@tsed/platform-router": "7.3.1",
+    "@tsed/common": "7.35.0",
+    "@tsed/core": "7.35.0",
+    "@tsed/di": "7.35.0",
+    "@tsed/eslint": "7.35.0",
+    "@tsed/platform-router": "7.35.0",
+    "@tsed/typescript": "7.35.0",
     "@types/passport": "1.0.7",
     "@types/passport-http": "0.3.9",
     "@types/passport-local": "1.0.34",
     "@types/passport-strategy": "0.2.35",
+    "eslint": "^8.12.0",
     "passport": "0.5.2",
     "passport-http": "0.3.0",
     "passport-local": "1.0.0",
     "passport-strategy": "1.0.0"
   },
   "peerDependencies": {
-    "@tsed/common": "^7.3.1",
+    "@tsed/common": "^7.35.0",
     "passport": ">=0.4.1"
   },
   "peerDependenciesMeta": {

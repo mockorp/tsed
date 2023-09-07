@@ -1,5 +1,6 @@
 import type {Type} from "@tsed/core";
 import type {JwksKeyParameters} from "@tsed/jwks";
+// @ts-ignore
 import type {Configuration} from "oidc-provider";
 import type {Adapter} from "@tsed/adapters";
 import type {OidcAccountsMethods} from "./OidcAccountsMethods";
@@ -49,10 +50,14 @@ export interface OidcSettings extends Configuration {
    * Use the connection name for the OIDCRedisAdapter.
    */
   connectionName?: string;
+
+  plugins?: TsED.OIDCPluginSettings;
 }
 
 declare global {
   namespace TsED {
+    interface OIDCPluginSettings {}
+
     interface Configuration {
       oidc: OidcSettings;
     }

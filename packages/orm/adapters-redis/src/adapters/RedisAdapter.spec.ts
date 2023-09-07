@@ -1,8 +1,8 @@
 import {AdapterModel, Adapters, Indexed} from "@tsed/adapters";
-import {RedisAdapter} from "@tsed/adapters-redis";
 import {IORedisTest, registerConnectionProvider} from "@tsed/ioredis";
 import {deserialize} from "@tsed/json-mapper";
 import {Property, Required} from "@tsed/schema";
+import {RedisAdapter} from "./RedisAdapter";
 
 const REDIS_CONNECTION = Symbol.for("redis_connection");
 
@@ -22,7 +22,7 @@ class Client {
   secret: string;
 }
 
-async function createAdapterFixture<Model extends AdapterModel = Client>({
+function createAdapterFixture<Model extends AdapterModel = Client>({
   collectionName = "client",
   model = Client
 }: {collectionName?: string; model?: any} = {}) {
@@ -280,7 +280,8 @@ describe("RedisAdapter", () => {
 
       const majItem = deserialize<Client>(
         {
-          name: "name"
+          name: "name",
+          secret: "secret2"
         },
         {type: Client}
       );

@@ -13,10 +13,10 @@ meta:
 
 ## Features
 
-Currently, `@tsed/ioredis` allows you:
+Currently, `@tsed/ioredis` allows you to:
 
 - Configure one or more Redis database connections via the `@Configuration` configuration.
-- Share redis connection with `@tsed/platform-cache`.
+- Share Redis connection with `@tsed/platform-cache`.
 - Support classic Redis connection and Cluster connection.
 - Inject connection to another service.
 - Mock connection for unit/integration test.
@@ -53,7 +53,7 @@ registerConnectionProvider({
 
 ::: tip Note
 
-`registerConnectionProvider` create automatically an injectable `RedisConnection`.
+`registerConnectionProvider` creates automatically an injectable `RedisConnection`.
 
 :::
 
@@ -68,7 +68,7 @@ import "@tsed/ioredis";
   ioredis: [
     {
       name: "default",
-      // share the redis connection with @tsed/platform-cache
+      // share the Redis connection with @tsed/platform-cache
       cache: true
 
       // redis options
@@ -117,7 +117,7 @@ import "@tsed/ioredis";
   ioredis: [
     {
       name: "default",
-      // share the redis connection with @tsed/platform-cache
+      // share the Redis connection with @tsed/platform-cache
       cache: true,
       // cluster options
       nodes: ["..."],
@@ -150,12 +150,48 @@ import "@tsed/ioredis";
 class MyModule {}
 ```
 
+## Sentinel configuration
+
+```typescript
+import {Configuration} from "@tsed/di";
+import "@tsed/platform-cache"; // add this module if you want to use cache
+import "@tsed/ioredis";
+
+@Configuration({
+  ioredis: [
+    {
+      name: "default",
+      // share the redis connection with @tsed/platform-cache
+      cache: true,
+      // sentinel master name
+      sentinelName: "redis-master",
+      // sentinels nodes
+      sentinels: ["..."],
+      redisOptions: {
+        noDelay: true,
+        connectTimeout: 15000,
+        autoResendUnfulfilledCommands: true,
+        maxRetriesPerRequest: 5,
+        enableAutoPipelining: true,
+        autoPipeliningIgnoredCommands: ["scan"]
+      }
+      //
+    }
+  ],
+  // cache options
+  cache: {
+    ttl: 300
+  }
+})
+class MyModule {}
+```
+
 ## Testing
 
 Ts.ED provides a utility that allows you to test a service that consumes a Redis connection.
 This use relies on the awesome [ioredis-mock](https://www.npmjs.com/package/ioredis-mock) module.
 
-Here is a class that consume a redis connection:
+Here is a class that consumes a Redis connection:
 
 ```typescript
 import {v4} from "uuid";
@@ -203,7 +239,7 @@ export class ClientModel {
 }
 ```
 
-And his test:
+And its test:
 
 ```typescript
 import {ClientRepository} from "./ClientRepository";

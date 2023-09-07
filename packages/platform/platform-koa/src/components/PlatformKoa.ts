@@ -1,7 +1,6 @@
 import KoaRouter from "@koa/router";
 import {
   createContext,
-  getContext,
   InjectorService,
   PlatformAdapter,
   PlatformApplication,
@@ -9,6 +8,7 @@ import {
   PlatformHandler,
   PlatformMulter,
   PlatformMulterSettings,
+  PlatformProvider,
   PlatformRequest,
   PlatformResponse,
   PlatformStaticsOptions,
@@ -55,7 +55,10 @@ KoaRouter.prototype.match = function match(...args: any[]) {
  * @platform
  * @koa
  */
+@PlatformProvider()
 export class PlatformKoa implements PlatformAdapter<Koa> {
+  static readonly NAME = "koa";
+
   readonly providers = [
     {
       provide: PlatformResponse,
@@ -90,7 +93,7 @@ export class PlatformKoa implements PlatformAdapter<Koa> {
    * @param module
    * @param settings
    */
-  static async bootstrap(module: Type<any>, settings: Partial<TsED.Configuration> = {}) {
+  static bootstrap(module: Type<any>, settings: Partial<TsED.Configuration> = {}) {
     return PlatformBuilder.bootstrap<Koa>(module, {
       ...settings,
       adapter: PlatformKoa
@@ -143,8 +146,8 @@ export class PlatformKoa implements PlatformAdapter<Koa> {
 
     this.injector.logger.debug("Mount app context");
 
-    app.use(async (koaContext: Context, next: Next) => {
-      const $ctx = await invoke({
+    app.use((koaContext: Context, next: Next) => {
+      const $ctx = invoke({
         request: koaContext.request as any,
         response: koaContext.response as any,
         koaContext

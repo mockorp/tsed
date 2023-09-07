@@ -1,5 +1,5 @@
 import {DateFormat, DateTime} from "@tsed/schema";
-import {getFormioSchema} from "../src";
+import {Component, getFormioSchema} from "../src";
 
 describe("Date integration", () => {
   it("should generate date-time field", async () => {
@@ -7,6 +7,16 @@ describe("Date integration", () => {
       @DateTime()
       test: Date;
     }
+
+    const form = await getFormioSchema(Model);
+    expect(form).toMatchSnapshot();
+  });
+  it("should generate date field", async () => {
+    class Model {
+      @DateFormat()
+      test: Date;
+    }
+
     const form = await getFormioSchema(Model);
     expect(form).toEqual({
       components: [
@@ -19,19 +29,30 @@ describe("Date integration", () => {
           enableMaxDateInput: false,
           enableMinDateInput: false,
           enableTime: false,
+          format: "yyyy-MM-dd",
           input: true,
           key: "test",
           label: "Test",
-          timePicker: {
-            showMeridian: false
-          },
           type: "datetime",
           validate: {
             required: false
           },
           widget: {
-            enableTime: true,
-            time_24hr: true
+            allowInput: true,
+            disableWeekdays: false,
+            disableWeekends: false,
+            displayInTimezone: "viewer",
+            enableTime: false,
+            format: "yyyy-MM-dd",
+            hourIncrement: 1,
+            locale: "en",
+            maxDate: null,
+            minDate: null,
+            minuteIncrement: 1,
+            mode: "single",
+            noCalendar: false,
+            type: "calendar",
+            useLocaleSettings: false
           }
         }
       ],
@@ -45,18 +66,25 @@ describe("Date integration", () => {
       tags: []
     });
   });
-  it("should generate date field", async () => {
+  it("should generate date field with additional props", async () => {
     class Model {
       @DateFormat()
+      @Component({
+        datePicker: {
+          disableWeekends: true,
+          disableWeekdays: true
+        }
+      })
       test: Date;
     }
+
     const form = await getFormioSchema(Model);
     expect(form).toEqual({
       components: [
         {
           datePicker: {
-            disableWeekdays: false,
-            disableWeekends: false
+            disableWeekdays: true,
+            disableWeekends: true
           },
           disabled: false,
           enableMaxDateInput: false,

@@ -1,9 +1,14 @@
 import {PlatformTest} from "@tsed/common";
-import {PlatformKoaRequest, PlatformKoaResponse} from "@tsed/platform-koa";
+import {PlatformKoaRequest} from "./PlatformKoaRequest";
+import {PlatformKoaResponse} from "./PlatformKoaResponse";
 
 function createResponse() {
   const res = PlatformTest.createResponse();
   const req = PlatformTest.createRequest();
+
+  const koaContext: any = {
+    response: {}
+  };
 
   const koaResponse: any = {
     ...res,
@@ -21,9 +26,7 @@ function createResponse() {
     }
   };
 
-  const koaContext: any = {
-    response: koaResponse
-  };
+  koaContext.response = koaResponse;
 
   const ctx = PlatformTest.createRequestContext({
     event: {
@@ -34,7 +37,7 @@ function createResponse() {
     RequestKlass: PlatformKoaRequest
   });
 
-  return {res, response: ctx.response as PlatformKoaResponse, ctx, koaResponse, koaRequest};
+  return {res, response: ctx.response as PlatformKoaResponse, ctx, koaResponse, koaRequest, koaContext};
 }
 
 describe("PlatformKoaResponse", () => {
@@ -56,7 +59,7 @@ describe("PlatformKoaResponse", () => {
     });
   });
   describe("statusCode", () => {
-    it("return statusCode", async () => {
+    it("return statusCode", () => {
       const {response} = createResponse();
 
       response.status(302);
@@ -65,7 +68,7 @@ describe("PlatformKoaResponse", () => {
     });
   });
   describe("hasStatus", () => {
-    it("return hasStatus", async () => {
+    it("return hasStatus", () => {
       const {response} = createResponse();
 
       response.status(404);
@@ -77,7 +80,7 @@ describe("PlatformKoaResponse", () => {
     });
   });
   describe("contentType()", () => {
-    it("should set contentType", async () => {
+    it("should set contentType", () => {
       const {ctx, koaResponse} = createResponse();
 
       ctx.response.contentType("text/html");
@@ -86,7 +89,7 @@ describe("PlatformKoaResponse", () => {
     });
   });
   describe("body()", () => {
-    it("should set body", async () => {
+    it("should set body", () => {
       const {response, koaResponse} = createResponse();
 
       response.body("body");
@@ -176,6 +179,45 @@ describe("PlatformKoaResponse", () => {
 
       expect(result).toEqual({
         contenttype: "application/json",
+        "x-request-id": "id"
+      });
+    });
+  });
+  describe("cookie()", () => {
+    it("should manipulate cookies", () => {
+      const {res, response, koaContext} = createResponse();
+      koaContext.cookies = {};
+      koaContext.cookies.set = (...args: any[]) => {
+        if (!args[1]) {
+          res.headers["set-cookie"] = res.headers["set-cookie"].filter((cookie: string) => cookie.startsWith(args[0] + "="));
+          return;
+        }
+
+        let value = `${args[0]}=${args[1]}`;
+
+        if (!res.headers["set-cookie"]) {
+          res.headers["set-cookie"] = [value];
+        } else {
+          res.headers["set-cookie"] = [].concat(res.headers["set-cookie"], value as any);
+        }
+      };
+
+      response.cookie("locale", "fr-FR");
+      expect(res.headers).toEqual({
+        "set-cookie": ["locale=fr-FR"],
+        "x-request-id": "id"
+      });
+
+      response.cookie("filename", "test");
+      expect(res.headers).toEqual({
+        "set-cookie": ["locale=fr-FR", "filename=test"],
+        "x-request-id": "id"
+      });
+
+      response.cookie("filename", null);
+
+      expect(res.headers).toEqual({
+        "set-cookie": ["filename=test"],
         "x-request-id": "id"
       });
     });

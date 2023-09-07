@@ -1,11 +1,6 @@
-import {Provider, Account} from "oidc-provider";
-
-export type AuthorizationCode = InstanceType<Provider["AuthorizationCode"]>;
-export type AccessToken = InstanceType<Provider["AccessToken"]>;
-export type DeviceCode = InstanceType<Provider["DeviceCode"]>;
-export type RefreshToken = InstanceType<Provider["RefreshToken"]>;
-export type Client = InstanceType<Provider["Client"]>;
-export type BackchannelAuthenticationRequest = InstanceType<Provider["BackchannelAuthenticationRequest"]>;
+// @ts-ignore
+import type {default as Provider, Account} from "oidc-provider";
+import {AccessToken, AuthorizationCode, BackchannelAuthenticationRequest, DeviceCode} from "./interfaces";
 
 export interface OidcAccountsMethods {
   findAccount(

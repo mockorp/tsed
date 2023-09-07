@@ -1,13 +1,21 @@
 import {PlatformTest} from "@tsed/common";
+import {Logger} from "@tsed/logger";
 import {TestMongooseContext} from "@tsed/testing-mongoose";
 import {User} from "./helpers/entity/User";
 import {Server} from "./helpers/Server";
 import {UserService} from "./helpers/services/UserService";
-import {MikroORM} from "@mikro-orm/core";
+import {EntityManager, MikroORM} from "@mikro-orm/core";
+import {anyOfClass, anything, reset, spy, verify} from "ts-mockito";
+import {UnmanagedEventSubscriber1} from "./helpers/services/UnmanagedEventSubscriber1";
+import {UnmanagedEventSubscriber2} from "./helpers/services/UnmanagedEventSubscriber2";
 import {MikroOrmModule, TransactionalInterceptor} from "../src";
-import {anything, spy, verify} from "ts-mockito";
+import {Hooks} from "./helpers/services/Hooks";
 
 describe("MikroOrm integration", () => {
+  let spiedLogger!: Logger;
+  let spiedTransactionalInterceptor!: TransactionalInterceptor;
+  let spiedHooks!: Hooks;
+
   beforeEach(async () => {
     await TestMongooseContext.install();
     const {url: clientUrl} = await TestMongooseContext.getMongooseOptions();
@@ -18,7 +26,9 @@ describe("MikroOrm integration", () => {
         {
           clientUrl,
           type: "mongo",
-          entities: [User]
+          entities: [User],
+          // @ts-expect-error mikro-orm supports the class reference starting from v6
+          subscribers: [UnmanagedEventSubscriber1, new UnmanagedEventSubscriber2()]
         },
         {
           clientUrl,
@@ -36,11 +46,20 @@ describe("MikroOrm integration", () => {
     });
 
     await bstrp();
+
+    spiedLogger = spy(PlatformTest.get(Logger));
+    spiedTransactionalInterceptor = spy(PlatformTest.get(TransactionalInterceptor));
+    spiedHooks = spy(PlatformTest.get(Hooks));
   });
-  afterEach(TestMongooseContext.reset);
+
+  afterEach(async () => {
+    reset<Hooks | TransactionalInterceptor | Logger>(spiedLogger, spiedTransactionalInterceptor, spiedHooks);
+
+    await TestMongooseContext.reset();
+  });
 
   it("should return repository", () => {
-    const service = PlatformTest.injector.get<UserService>(UserService)!;
+    const service = PlatformTest.get<UserService>(UserService)!;
 
     expect(service).toBeInstanceOf(UserService);
     expect(service.orm).toBeInstanceOf(MikroORM);
@@ -59,12 +78,28 @@ describe("MikroOrm integration", () => {
   });
 
   it("should create a request context", async () => {
-    const service = PlatformTest.injector.get<UserService>(UserService)!;
-    const transactionalInterceptor = PlatformTest.injector.get<TransactionalInterceptor>(TransactionalInterceptor)!;
-    const spiedTransactionalInterceptor = spy(transactionalInterceptor);
+    const service = PlatformTest.get<UserService>(UserService)!;
 
     await service.create({email: "test@example.com"});
 
     verify(spiedTransactionalInterceptor.intercept(anything(), anything())).once();
+  });
+
+  it("should resolve the configured subscribers", async () => {
+    const service = PlatformTest.get<UserService>(UserService)!;
+
+    await service.create({email: "test@example.com"});
+
+    verify(spiedLogger.info("Changes has been flushed.")).thrice();
+  });
+
+  it("should emit the $afterTransactionCommit event", async () => {
+    const service = PlatformTest.get<UserService>(UserService)!;
+
+    await service.create({email: "test@example.com"});
+
+    verify(spiedHooks.$afterTransactionCommit(anyOfClass(EntityManager))).calledAfter(
+      spiedHooks.$beforeTransactionCommit(anyOfClass(EntityManager))
+    );
   });
 });

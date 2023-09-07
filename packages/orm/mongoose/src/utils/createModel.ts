@@ -1,6 +1,7 @@
-import {ancestorsOf, nameOf, Store, Type} from "@tsed/core";
-import mongoose, {CompileModelOptions, Connection, Model as MongooseModel} from "mongoose";
-import {MONGOOSE_MODEL, MONGOOSE_MODEL_NAME, MONGOOSE_SCHEMA_OPTIONS} from "../constants/constants";
+import {nameOf, Store, Type} from "@tsed/core";
+import {JsonEntityStore} from "@tsed/schema";
+import mongoose, {Connection} from "mongoose";
+import {MONGOOSE_MODEL, MONGOOSE_MODEL_NAME} from "../constants/constants";
 import {MongooseModels} from "../registries/MongooseModels";
 import {getSchemaToken} from "./createSchema";
 
@@ -22,7 +23,6 @@ export function getModelToken(target: Type<any>, options: any) {
  * @param collection (optional, induced from model name)
  * @param overwriteModels
  * @param connection
- * @param discriminatorValue
  * @returns {Model<T extends Document>}
  */
 export function createModel<T>(
@@ -31,25 +31,16 @@ export function createModel<T>(
   name: string = nameOf(target),
   collection?: string,
   overwriteModels?: boolean,
-  connection?: Connection,
-  discriminatorValue?: string
+  connection?: Connection
 ) {
-  // if ancestor has a discriminatorKey we need to link model with anscestor schema
-  const ancestor = ancestorsOf(target).find((ancestor) => {
-    const options = Store.from(ancestor).get(MONGOOSE_SCHEMA_OPTIONS) || {};
-    return !!options.discriminatorKey;
-  });
+  const entity = JsonEntityStore.from(target);
 
-  if (ancestor && ancestor !== target) {
-    const ancestorModel = Store.from(ancestor).get(MONGOOSE_MODEL) as MongooseModel<typeof target> | undefined;
-    if (ancestorModel) {
-      const discriminatorName = discriminatorValue || name;
-      if (ancestorModel.discriminators && ancestorModel.discriminators[discriminatorName]) {
-        return ancestorModel.discriminators[discriminatorName];
-      } else {
-        return ancestorModel.discriminator(discriminatorName, schema);
-      }
-    }
+  if (entity.isDiscriminatorChild) {
+    const discriminatorName = entity.discriminatorAncestor!.schema.discriminator().getDefaultValue(target)!;
+    const ancestorModel = entity.discriminatorAncestor!.get(MONGOOSE_MODEL);
+
+    // check if discriminator is already registered on model before creating it
+    return ancestorModel.discriminators?.[discriminatorName] || ancestorModel.discriminator(discriminatorName, schema);
   }
 
   const opts = overwriteModels ? {overwriteModels} : undefined;

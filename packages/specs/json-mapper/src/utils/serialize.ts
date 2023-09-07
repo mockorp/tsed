@@ -74,6 +74,7 @@ export function classToPlainObject(obj: any, options: JsonSerializerOptions<any,
   const additionalProperties = !!entity.schema.get("additionalProperties");
   const schemaProperties = getSchemaProperties(entity, obj);
   const properties = new Set<string>();
+
   const out: any = schemaProperties.reduce((newObj, [key, propStore]) => {
     properties.add(key as string);
 
@@ -90,6 +91,7 @@ export function classToPlainObject(obj: any, options: JsonSerializerOptions<any,
       self: obj,
       type: value === obj[key] ? getType(propStore, value) : undefined,
       collectionType: propStore.collectionType,
+      format: propStore.itemSchema.get("format"),
       ...props
     });
 
@@ -104,6 +106,14 @@ export function classToPlainObject(obj: any, options: JsonSerializerOptions<any,
       [key]: value
     };
   }, {});
+
+  if (entity.discriminatorAncestor) {
+    const discriminator = entity.discriminatorAncestor.schema.discriminator();
+
+    if (!out[discriminator.propertyName]) {
+      out[discriminator.propertyName] = discriminator.getDefaultValue(entity.target);
+    }
+  }
 
   if (additionalProperties) {
     objectKeys(obj).forEach((key: any) => {

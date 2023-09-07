@@ -1,7 +1,12 @@
-import {catchAsyncError, isStream} from "@tsed/core";
+import filedirname from "filedirname";
 import {createReadStream} from "fs";
 import {of} from "rxjs";
+import {catchAsyncError} from "../utils/catchError";
+import {isStream} from "../utils/objects/isStream";
 import {AnyToPromise, AnyToPromiseStatus} from "./AnyToPromise";
+
+// FIXME remove when esm is ready
+const [, rootDir] = filedirname();
 
 describe("AnyToPromise", () => {
   it("should handle sync value", async () => {
@@ -26,8 +31,8 @@ describe("AnyToPromise", () => {
   it("should handle async value", async () => {
     const resolver = new AnyToPromise();
 
-    const result = await resolver.call(async () => {
-      return "test";
+    const result = await resolver.call(() => {
+      return Promise.resolve("test");
     });
 
     expect(result).toEqual({state: "RESOLVED", data: "test", type: "DATA"});
@@ -35,8 +40,8 @@ describe("AnyToPromise", () => {
   it("should handle canceled async value", async () => {
     const resolver = new AnyToPromise();
 
-    const result = await resolver.call(async () => {
-      return AnyToPromiseStatus.CANCELED;
+    const result = await resolver.call(() => {
+      return Promise.resolve(AnyToPromiseStatus.CANCELED);
     });
 
     expect(result).toEqual({state: "CANCELED"});
@@ -44,15 +49,15 @@ describe("AnyToPromise", () => {
   it("should handle response with data", async () => {
     const resolver = new AnyToPromise();
 
-    const result = await resolver.call(async () => {
-      return {
+    const result = await resolver.call(() => {
+      return Promise.resolve({
         data: "data",
         headers: {
           "Content-Type": "type"
         },
         status: 200,
         statusText: "OK"
-      };
+      });
     });
 
     expect(result).toEqual({
@@ -68,8 +73,8 @@ describe("AnyToPromise", () => {
   it("should handle async undefined value", async () => {
     const resolver = new AnyToPromise();
 
-    const result = await resolver.call(async () => {
-      return undefined;
+    const result = await resolver.call(() => {
+      return Promise.resolve(undefined);
     });
 
     expect(result).toEqual({state: "RESOLVED", data: undefined, type: "DATA"});
@@ -97,7 +102,7 @@ describe("AnyToPromise", () => {
     const resolver = new AnyToPromise();
 
     const result = await resolver.call(() => {
-      return createReadStream(__dirname + "/__mock__/response.txt");
+      return createReadStream(rootDir + "/__mock__/response.txt");
     });
 
     expect(result.type).toBe("STREAM");
@@ -107,8 +112,8 @@ describe("AnyToPromise", () => {
   it("should catch error", async () => {
     const resolver = new AnyToPromise();
 
-    const result = await resolver.call(async () => {
-      return "test";
+    const result = await resolver.call(() => {
+      return Promise.resolve("test");
     });
 
     expect(result).toEqual({state: "RESOLVED", data: "test", type: "DATA"});
@@ -118,8 +123,8 @@ describe("AnyToPromise", () => {
     const resolver = new AnyToPromise();
 
     const error = await catchAsyncError(() => {
-      return resolver.call(async () => {
-        throw new Error("test");
+      return resolver.call(() => {
+        return Promise.reject(new Error("test"));
       });
     });
 
@@ -143,8 +148,9 @@ describe("AnyToPromise", () => {
     const {next} = resolver;
 
     const error = await catchAsyncError(() => {
-      return resolver.call(async () => {
+      return resolver.call(() => {
         next(new Error("test"));
+        return Promise.resolve();
       });
     });
 

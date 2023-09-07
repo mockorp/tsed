@@ -10,6 +10,4 @@ export interface ViteRenderContext<Data = Record<string, unknown>, Session = Rec
   secure: boolean;
   headers: IncomingHttpHeaders;
   session?: Session;
-  data: VitePageProps;
-  view: string;
 }

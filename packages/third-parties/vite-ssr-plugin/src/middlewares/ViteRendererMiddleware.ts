@@ -1,4 +1,4 @@
-import {Context, Middleware} from "@tsed/common";
+import {Constant, Context, Middleware} from "@tsed/common";
 import {Inject} from "@tsed/di";
 
 import {ViteService} from "../services/ViteService";
@@ -9,12 +9,8 @@ export class ViteRendererMiddleware {
   protected viteService: ViteService;
 
   async use(@Context() $ctx: Context) {
-    const html = await this.viteService.render("*", $ctx);
+    const response = await this.viteService.render("*", {$ctx});
 
-    if (html) {
-      $ctx.response.body(html);
-    }
-
-    return;
+    response && $ctx.response.body(response);
   }
 }

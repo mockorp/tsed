@@ -5,7 +5,7 @@
   "private": true,
   "scripts": {
     "vuepress:build": "sh .vuepress/scripts/build.sh",
-    "vuepress:serve": "vuepress dev .",
+    "vuepress:serve": "cross-env NODE_OPTIONS=--openssl-legacy-provider vuepress dev .",
     "browserslist": "npx browserslist@latest --update-db"
   },
   "repository": {
@@ -57,15 +57,15 @@
     "cross-env": "7.0.3"
   },
   "devDependencies": {
-    "@tsed/markdown-it-symbols": "3.20.4",
-    "@vuepress/plugin-google-analytics": "1.9.7",
+    "@tsed/markdown-it-symbols": "3.20.8",
+    "@vuepress/plugin-google-analytics": "1.9.9",
     "@vuepress/plugin-html-redirect": "^0.1.4",
     "@vuepress/plugin-medium-zoom": "1.9.7",
-    "@vuepress/plugin-pwa": "1.9.7",
+    "vuepress-plugin-sitemap": "2.3.1",
     "vue-analytics": "5.22.1",
     "axios": "0.27.2",
     "vuepress": "1.9.7",
-    "vuepress-theme-tsed": "3.20.5"
+    "vuepress-theme-tsed": "3.20.8"
   },
   "directories": {
     "packages": "packages",

@@ -1,8 +1,8 @@
+import {cleanObject} from "@tsed/core";
 import {pascalCase} from "change-case";
 import type {JsonSchema} from "../domain/JsonSchema";
 import {SpecTypes} from "../domain/SpecTypes";
 import {JsonSchemaOptions} from "../interfaces/JsonSchemaOptions";
-import {cleanObject} from "@tsed/core";
 
 /**
  * ignore
@@ -19,7 +19,7 @@ function getHost(options: JsonSchemaOptions) {
  */
 export function createRefName(name: string, options: JsonSchemaOptions) {
   if (options.groups && options.groups.length) {
-    return pascalCase(`${name} ${options.groups.join(" ")}`);
+    return pascalCase(`${name} ${options.groupsName || options.groups.join(" ")}`);
   }
 
   return name;
@@ -65,7 +65,7 @@ export function createRef(name: string, schema: JsonSchema, options: JsonSchemaO
 export function toRef(value: JsonSchema, schema: any, options: JsonSchemaOptions) {
   const name = createRefName(value.getName(), options);
 
-  options.schemas![value.getName()] = schema;
+  options.schemas![name] = schema;
 
   return createRef(name, value, options);
 }

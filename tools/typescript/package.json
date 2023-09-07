@@ -1,0 +1,17 @@
+{
+  "name": "@tsed/typescript",
+  "version": "7.35.0",
+  "description": "Util to compile source",
+  "private": true,
+  "main": "index.js",
+  "exports": {
+    ".": "./index.js",
+    "./tsconfig.node.json": "./tsconfig.node.json"
+  },
+  "scripts": {
+    "build:references": "node ./index.js"
+  },
+  "dependencies": {},
+  "devDependencies": {},
+  "peerDependencies": {}
+}

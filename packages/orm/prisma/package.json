@@ -1,6 +1,6 @@
 {
   "name": "@tsed/prisma",
-  "version": "7.3.1",
+  "version": "7.35.0",
   "description": "Generate Ts.ED JsonSchema based on Prisma models",
   "source": "./src/index.ts",
   "main": "./lib/cjs/index.js",
@@ -16,11 +16,13 @@
     "tsed-prisma": "lib/cjs/generator.js"
   },
   "scripts": {
-    "build": "rm -rf lib && yarn run build:esm && yarn run build:cjs",
-    "build:cjs": "tsc --build tsconfig.compile.json",
-    "build:esm": "tsc --build tsconfig.compile.esm.json",
-    "test": "cross-env NODE_ENV=test yarn jest",
-    "generate": "cd test && prisma -v && prisma generate"
+    "build": "rm -rf lib && yarn build:ts",
+    "test": "cross-env NODE_ENV=test yarn jest && jest-coverage-thresholds-bumper",
+    "generate:postgres": "cd test/postgres && prisma -v && prisma generate",
+    "generate:mongo": "cd test/mongo && prisma -v && prisma generate",
+    "build:ts": "tsc --build tsconfig.json && tsc --build tsconfig.esm.json",
+    "lint": "eslint '**/*.{ts,js}'",
+    "lint:fix": "eslint '**/*.{ts,js}' --fix"
   },
   "private": false,
   "dependencies": {
@@ -30,24 +32,27 @@
     "fs-extra": "^10.1.0",
     "pluralize": "^8.0.0",
     "ts-morph": "^12.0.0",
-    "tslib": "2.4.0"
+    "tslib": "2.5.0"
   },
   "devDependencies": {
     "@prisma/client": "^4.0.0",
-    "@tsed/core": "7.3.1",
-    "@tsed/di": "7.3.1",
-    "@tsed/json-mapper": "7.3.1",
-    "@tsed/schema": "7.3.1",
+    "@tsed/core": "7.35.0",
+    "@tsed/di": "7.35.0",
+    "@tsed/eslint": "7.35.0",
+    "@tsed/json-mapper": "7.35.0",
+    "@tsed/schema": "7.35.0",
+    "@tsed/typescript": "7.35.0",
     "@types/change-case": "^2.3.1",
     "@types/pluralize": "0.0.29",
+    "eslint": "^8.12.0",
     "prisma": "^4.0.0"
   },
   "peerDependencies": {
     "@prisma/client": ">=4.0.0",
-    "@tsed/core": "^7.3.1",
-    "@tsed/di": "^7.3.1",
-    "@tsed/json-mapper": "^7.3.1",
-    "@tsed/schema": "^7.3.1"
+    "@tsed/core": "^7.35.0",
+    "@tsed/di": "^7.35.0",
+    "@tsed/json-mapper": "^7.35.0",
+    "@tsed/schema": "^7.35.0"
   },
   "keywords": [
     "TypeScript",

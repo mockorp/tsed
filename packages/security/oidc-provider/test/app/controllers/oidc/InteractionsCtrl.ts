@@ -9,11 +9,13 @@ import {LoginInteraction} from "../../interactions/LoginInteraction";
 @Name("Oidc")
 @Interactions({
   path: "/interaction/:uid",
+
+  // this list define the priority of each interaction!
   children: [LoginInteraction, ConsentInteraction, CustomInteraction, AbortInteraction]
 })
 export class InteractionsCtrl {
   @Get("/:interaction?")
-  async prompt(@PathParams("interaction") interaction: string, @OidcCtx() oidcCtx: OidcCtx) {
+  prompt(@PathParams("interaction") interaction: string, @OidcCtx() oidcCtx: OidcCtx) {
     return oidcCtx.runInteraction(interaction);
   }
 }

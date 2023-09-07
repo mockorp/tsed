@@ -1,18 +1,15 @@
 import {validateSpec} from "../../test/helpers/validateSpec";
-import {
-  CollectionOf,
-  Consumes,
-  In,
-  JsonParameterTypes,
-  Min,
-  Name,
-  OperationPath,
-  Path,
-  Property,
-  Required,
-  Returns,
-  SpecTypes
-} from "@tsed/schema";
+import {CollectionOf} from "../decorators/collections/collectionOf";
+import {Min} from "../decorators/common/minimum";
+import {Name} from "../decorators/common/name";
+import {Property} from "../decorators/common/property";
+import {Required} from "../decorators/common/required";
+import {Consumes} from "../decorators/operations/consumes";
+import {In} from "../decorators/operations/in";
+import {OperationPath} from "../decorators/operations/operationPath";
+import {Returns} from "../decorators/operations/returns";
+import {JsonParameterTypes} from "../domain/JsonParameterTypes";
+import {SpecTypes} from "../domain/SpecTypes";
 import {getSpec} from "./getSpec";
 
 describe("getSpec()", () => {
@@ -116,7 +113,7 @@ describe("getSpec()", () => {
         });
       });
       describe("Query", () => {
-        it("should declare all schema correctly (query -  openspec3 - model)", async () => {
+        it("should declare all schema correctly (query -  openspec3 - model)", () => {
           // WHEN
           class QueryModel {
             @Property()
@@ -151,7 +148,7 @@ describe("getSpec()", () => {
             tags: [{name: "Controller"}]
           });
         });
-        it("should declare all schema correctly (query -  openspec3 - array string)", async () => {
+        it("should declare all schema correctly (query -  openspec3 - array string)", () => {
           // WHEN
           class Controller {
             @OperationPath("GET", "/:id")
@@ -201,7 +198,7 @@ describe("getSpec()", () => {
             ]
           });
         });
-        it("should declare all schema correctly (query -  openspec3 - Map)", async () => {
+        it("should declare all schema correctly (query -  openspec3 - Map)", () => {
           // WHEN
           class Controller {
             @OperationPath("GET", "/:id")
@@ -253,7 +250,7 @@ describe("getSpec()", () => {
         });
       });
       describe("Body", () => {
-        it("should declare all schema correctly (model -  openspec3)", async () => {
+        it("should declare all schema correctly (model -  openspec3)", () => {
           class MyModel {
             @Property()
             prop: string;
@@ -312,7 +309,7 @@ describe("getSpec()", () => {
             }
           });
         });
-        it("should declare all schema correctly (Array - inline - OS3)", async () => {
+        it("should declare all schema correctly (Array - inline - OS3)", () => {
           class Product {
             @Property()
             title: string;
@@ -374,7 +371,7 @@ describe("getSpec()", () => {
             ]
           });
         });
-        it("should declare all schema correctly (Array - inline - number - OS3)", async () => {
+        it("should declare all schema correctly (Array - inline - number - OS3)", () => {
           class Controller {
             @Consumes("application/json")
             @OperationPath("POST", "/")
@@ -480,7 +477,7 @@ describe("getSpec()", () => {
         });
       });
       describe("Cookies", () => {
-        it("should declare all schema correctly (OS3)", async () => {
+        it("should declare all schema correctly (OS3)", () => {
           class Controller {
             @Consumes("application/json")
             @OperationPath("POST", "/")
@@ -524,7 +521,7 @@ describe("getSpec()", () => {
       });
     });
     describe("Response", () => {
-      it("should declare all schema correctly (openspec3)", async () => {
+      it("should declare all schema correctly (openspec3)", () => {
         // WHEN
         class Controller {
           @OperationPath("POST", "/")
@@ -564,7 +561,7 @@ describe("getSpec()", () => {
           }
         });
       });
-      it("should declare an Array of string (openspec3)", async () => {
+      it("should declare an Array of string (openspec3)", () => {
         // WHEN
         class Controller {
           @OperationPath("POST", "/")

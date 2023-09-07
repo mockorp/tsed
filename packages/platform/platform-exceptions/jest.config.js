@@ -2,11 +2,11 @@
 // https://jestjs.io/docs/en/configuration.html
 
 module.exports = {
-  ...require("@tsed/jest-config")(__dirname, "platform-exceptions"),
+  ...require("@tsed/jest-config"),
   coverageThreshold: {
     global: {
       statements: 100,
-      branches: 94.73,
+      branches: 95.34,
       functions: 100,
       lines: 100
     }

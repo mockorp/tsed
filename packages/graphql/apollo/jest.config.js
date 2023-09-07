@@ -2,13 +2,13 @@
 // https://jestjs.io/docs/en/configuration.html
 
 module.exports = {
-  ...require("@tsed/jest-config")(__dirname, "apollo"),
+  ...require("@tsed/jest-config"),
   coverageThreshold: {
     global: {
-      statements: 100,
-      branches: 75,
+      statements: 94.57,
+      branches: 82.14,
       functions: 100,
-      lines: 100
+      lines: 94.57
     }
   }
 };

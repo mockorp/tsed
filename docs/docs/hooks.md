@@ -36,7 +36,8 @@ bootstrap();
 
 All providers are called by the emitted `event` and any provider can also emit his own `event`.
 
-::: tip By convention
+::: tip
+By convention
 
 - A hook is always prefixed by `$`,
 - A hook is emitted from a module,
@@ -75,6 +76,27 @@ export class MyModule implements OnInit {
 ::: tip Note
 Database connection can be performed with Asynchronous Provider. See [custom providers](/docs/custom-providers.md)
 :::
+
+### $onRequest/$onResponse
+
+Ts.ED provide a way to intercept the request and response event. You can listen these hooks by implementing a `$onRequest` and `$onResponse` methods
+on an injectable service:
+
+
+```typescript
+import {Module} from "@tsed/di";
+import {PlatformContext} from "@tsed/common";
+
+@Module()
+class CustomContextModule {
+   $onRequest($ctx: PlatformContext) {
+     // do something
+   }
+   $onResponse($ctx: PlatformContext) {
+     // do something
+   }
+}
+```
 
 ### Custom provider <Badge text="v6.110.0+" />
 

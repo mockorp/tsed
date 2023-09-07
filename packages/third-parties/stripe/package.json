@@ -1,6 +1,6 @@
 {
   "name": "@tsed/stripe",
-  "version": "7.3.1",
+  "version": "7.35.0",
   "description": "Stripe package for Ts.ED framework",
   "private": false,
   "keywords": [
@@ -23,29 +23,33 @@
     "default": "./lib/esm/index.js"
   },
   "scripts": {
-    "build": "yarn barrels && yarn run build:esm && yarn run build:cjs",
-    "build:cjs": "tsc --build tsconfig.compile.json",
-    "build:esm": "tsc --build tsconfig.compile.esm.json",
+    "build": "yarn barrels && yarn build:ts",
     "barrels": "yarn barrelsby --delete -d ./src -e \"\\.spec\\.ts\" -e \"__mock__\" -e \".benchmark.ts\"",
-    "test": "cross-env NODE_ENV=test yarn jest --max-workers=2"
+    "test": "cross-env NODE_ENV=test yarn jest --max-workers=2 && jest-coverage-thresholds-bumper",
+    "build:ts": "tsc --build tsconfig.json && tsc --build tsconfig.esm.json",
+    "lint": "eslint '**/*.{ts,js}'",
+    "lint:fix": "eslint '**/*.{ts,js}' --fix"
   },
   "dependencies": {
-    "tslib": "2.4.0"
+    "tslib": "2.5.0"
   },
   "devDependencies": {
-    "@tsed/core": "7.3.1",
-    "@tsed/di": "7.3.1",
-    "@tsed/exceptions": "7.3.1",
-    "@tsed/platform-middlewares": "7.3.1",
-    "@tsed/platform-params": "7.3.1",
-    "@tsed/schema": "7.3.1",
+    "@tsed/core": "7.35.0",
+    "@tsed/di": "7.35.0",
+    "@tsed/eslint": "7.35.0",
+    "@tsed/exceptions": "7.35.0",
+    "@tsed/platform-middlewares": "7.35.0",
+    "@tsed/platform-params": "7.35.0",
+    "@tsed/schema": "7.35.0",
+    "@tsed/typescript": "7.35.0",
+    "eslint": "^8.12.0",
     "stripe": "^8.129.0"
   },
   "peerDependencies": {
-    "@tsed/exceptions": "^7.3.1",
-    "@tsed/platform-middlewares": "^7.3.1",
-    "@tsed/platform-params": "^7.3.1",
-    "@tsed/schema": "^7.3.1",
+    "@tsed/exceptions": "^7.35.0",
+    "@tsed/platform-middlewares": "^7.35.0",
+    "@tsed/platform-params": "^7.35.0",
+    "@tsed/schema": "^7.35.0",
     "@types/body-parser": "^1.19.0",
     "body-parser": "^1.19.0",
     "stripe": "^9.16.0"

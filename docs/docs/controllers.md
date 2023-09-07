@@ -225,9 +225,10 @@ To use @RawBodyParams() properly, you have to remove bodyParser add on `$beforeR
 ```diff
 
 @Configuration({
++  rawBody: true,
 +  middlewares: [
-+     bodyParser.json(),
-+     bodyParser.urlencoded({extended: true})
++     {use: 'json-parser'},
++     {use: 'urlencoded-parser', options: {extended: true})
 +  ]
 })
 export class Server {
@@ -243,6 +244,21 @@ export class Server {
 ```
 
 :::
+
+## Integer parameter
+
+The @@Integer@@ decorator is used to set integer type for integral numbers.
+
+```typescript
+@Controller("/")
+class ExampleCtrl {
+  @Get("/")
+  @Returns(200, Array).OfInteger()
+  async get(@BodyParams() @Integer() list: number[]) {
+    return list;
+  }
+}
+```
 
 ### Headers
 

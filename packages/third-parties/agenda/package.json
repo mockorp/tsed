@@ -1,6 +1,6 @@
 {
   "name": "@tsed/agenda",
-  "version": "7.3.1",
+  "version": "7.35.0",
   "description": "Agenda package for Ts.ED framework",
   "source": "./src/index.ts",
   "main": "./lib/cjs/index.js",
@@ -13,11 +13,12 @@
     "default": "./lib/esm/index.js"
   },
   "scripts": {
-    "build": "yarn barrels && yarn run build:esm && yarn run build:cjs",
-    "build:cjs": "tsc --build tsconfig.compile.json",
-    "build:esm": "tsc --build tsconfig.compile.esm.json",
+    "build": "yarn barrels && yarn build:ts",
     "barrels": "yarn barrelsby --delete -d ./src -e \"\\.spec\\.ts\" -e \"__mock__\" -e \".benchmark.ts\"",
-    "test": "cross-env NODE_ENV=test yarn jest --runInBand"
+    "test": "cross-env NODE_ENV=test yarn jest --runInBand && jest-coverage-thresholds-bumper",
+    "build:ts": "tsc --build tsconfig.json && tsc --build tsconfig.esm.json",
+    "lint": "eslint '**/*.{ts,js}'",
+    "lint:fix": "eslint '**/*.{ts,js}' --fix"
   },
   "contributors": [
     {
@@ -25,14 +26,17 @@
     }
   ],
   "dependencies": {
-    "tslib": "2.4.0"
+    "tslib": "2.5.0"
   },
   "private": false,
   "devDependencies": {
-    "@tsed/common": "7.3.1",
-    "@tsed/core": "7.3.1",
-    "@tsed/di": "7.3.1",
-    "agenda": "^4.1.3"
+    "@tsed/common": "7.35.0",
+    "@tsed/core": "7.35.0",
+    "@tsed/di": "7.35.0",
+    "@tsed/eslint": "7.35.0",
+    "@tsed/typescript": "7.35.0",
+    "agenda": "^4.1.3",
+    "eslint": "^8.12.0"
   },
   "peerDependencies": {
     "agenda": "^4.1.3"

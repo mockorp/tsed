@@ -1,6 +1,6 @@
 {
   "name": "@tsed/exceptions",
-  "version": "7.3.1",
+  "version": "7.35.0",
   "description": "HTTP exceptions module for Ts.ED Framework and other pure Express application",
   "private": false,
   "source": "./src/index.ts",
@@ -14,19 +14,25 @@
     "default": "./lib/esm/index.js"
   },
   "scripts": {
-    "build": "yarn barrels && yarn run build:esm && yarn run build:cjs",
-    "build:cjs": "tsc --build tsconfig.compile.json",
-    "build:esm": "tsc --build tsconfig.compile.esm.json",
+    "build": "yarn barrels && yarn build:ts",
     "barrels": "yarn barrelsby --delete -d ./src -e \"\\.spec\\.ts\" -e \"__mock__\" -e \".benchmark.ts\"",
-    "test": "cross-env NODE_ENV=test yarn jest --max-workers=2"
+    "test": "cross-env NODE_ENV=test yarn jest --max-workers=2 && jest-coverage-thresholds-bumper",
+    "build:ts": "tsc --build tsconfig.json && tsc --build tsconfig.esm.json",
+    "lint": "eslint '**/*.{ts,js}'",
+    "lint:fix": "eslint '**/*.{ts,js}' --fix"
   },
   "dependencies": {
     "change-case": "4.1.2",
     "statuses": ">=2.0.1",
-    "tslib": "2.4.0"
+    "tslib": "2.5.0"
   },
   "devDependencies": {
-    "@types/statuses": "2.0.0"
+    "@tsed/eslint": "7.35.0",
+    "@tsed/typescript": "7.35.0",
+    "@types/statuses": "2.0.0",
+    "eslint": "^8.12.0"
   },
-  "peerDependencies": {}
+  "peerDependencies": {
+    "@tsed/core": "^7.35.0"
+  }
 }

@@ -1,4 +1,5 @@
 import faker from "@faker-js/faker";
+import {QueryParams} from "@tsed/common";
 import {
   AdditionalProperties,
   CollectionOf,
@@ -11,6 +12,7 @@ import {
   In,
   JsonEntityStore,
   JsonHookContext,
+  JsonParameterStore,
   MinLength,
   Name,
   Nullable,
@@ -608,7 +610,7 @@ describe("deserialize()", () => {
 
       class Controller {
         @OperationPath("POST", "/")
-        async method(@In("body") @CollectionOf(Product) products: Product[]) {
+        method(@In("body") @CollectionOf(Product) products: Product[]) {
           return null;
         }
       }
@@ -657,14 +659,14 @@ describe("deserialize()", () => {
 
       class Controller {
         @OperationPath("POST", "/")
-        async method(@In("body") @GenericOf(Product) product: Submission<Product>) {
+        method(@In("body") @GenericOf(Product) product: Submission<Product>) {
           return null;
         }
       }
 
       class Controller2 {
         @OperationPath("POST", "/")
-        async method(@In("body") @GenericOf(Article) product: Submission<Article>) {
+        method(@In("body") @GenericOf(Article) product: Submission<Article>) {
           return null;
         }
       }
@@ -776,6 +778,20 @@ describe("deserialize()", () => {
   describe("plainObjectToClass", () => {
     it("should return undefined", () => {
       expect(plainObjectToClass(undefined, {})).toBeUndefined();
+    });
+  });
+  describe("when a JsonParameterStore is given", () => {
+    it("should deserialize data (string[])", () => {
+      class Test {
+        test(@QueryParams("test", String) input: string[]) {}
+      }
+
+      const param = JsonParameterStore.get(Test, "test", 0);
+
+      // WHEN
+      const result = deserialize(["test"], {store: param});
+
+      expect(result).toEqual(["test"]);
     });
   });
 });

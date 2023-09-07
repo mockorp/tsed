@@ -1,6 +1,7 @@
 import {Adapter, Adapters} from "@tsed/adapters";
 import {Configuration, Inject, Injectable} from "@tsed/di";
-import {Adapter as OidcAdapter, AdapterConstructor} from "oidc-provider";
+// @ts-ignore
+import type {Adapter as OidcAdapter, AdapterConstructor} from "oidc-provider";
 
 export type OidcAdapterMethods<Model = any> = Adapter<Model> & Partial<Omit<OidcAdapter, "upsert">>;
 
@@ -39,11 +40,11 @@ export class OidcAdapters {
         await this.adapter.upsert(id, payload, expiresAt);
       }
 
-      async find(id: string) {
+      find(id: string) {
         return this.adapter.findById(id);
       }
 
-      async findByUserCode(userCode: string) {
+      findByUserCode(userCode: string) {
         // istanbul ignore next
         if (this.adapter.findByUserCode) {
           return this.adapter.findByUserCode(userCode);
@@ -54,7 +55,7 @@ export class OidcAdapters {
         });
       }
 
-      async findByUid(uid: string) {
+      findByUid(uid: string) {
         // istanbul ignore next
         if (this.adapter.findByUid) {
           return this.adapter.findByUid(uid);

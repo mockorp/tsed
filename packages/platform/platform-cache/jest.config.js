@@ -2,10 +2,14 @@
 // https://jestjs.io/docs/en/configuration.html
 
 module.exports = {
-  ...require("@tsed/jest-config")(__dirname, "platform-cache"),
+  ...require("@tsed/jest-config"),
+  roots: ["<rootDir>/src", "<rootDir>/test"],
+  moduleNameMapper: {
+    "@tsed/platform-cache": "<rootDir>/src/index.ts"
+  },
   coverageThreshold: {
     global: {
-      branches: 94.12,
+      branches: 94.53,
       functions: 100,
       lines: 100,
       statements: 100

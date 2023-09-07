@@ -1,5 +1,7 @@
 import {PlatformTest} from "@tsed/common";
 import {caching as cacheManager, multiCaching} from "cache-manager";
+import {UseCache} from "../decorators/useCache";
+import {getPrefix} from "../utils/getPrefix";
 import {PlatformCache} from "./PlatformCache";
 
 function createCacheFixture() {
@@ -71,8 +73,8 @@ describe("PlatformCache", () => {
 
       expect(await cacheManager.get("key")).toBeUndefined();
 
-      const result = await cacheManager.wrap("key", async () => {
-        return "valuePromised";
+      const result = await cacheManager.wrap("key", () => {
+        return Promise.resolve("valuePromised");
       });
 
       expect(result).toBe("valuePromised");
@@ -116,14 +118,14 @@ describe("PlatformCache", () => {
 
       expect(await cacheManager.get("key")).toBeUndefined();
 
-      const result = await cacheManager.wrap("key", async () => {
-        return "valuePromised";
+      const result = await cacheManager.wrap("key", () => {
+        return Promise.resolve("valuePromised");
       });
 
       expect(result).toBe("valuePromised");
     });
 
-    it("should return the calculated calculateTTL", async () => {
+    it("should return the calculated calculateTTL", () => {
       const cacheManager = PlatformTest.get<PlatformCache>(PlatformCache);
 
       expect(cacheManager.calculateTTL({}, 400)).toBe(400);
@@ -143,6 +145,38 @@ describe("PlatformCache", () => {
 
       expect(keys1).toEqual(["key", "key2"]);
       expect(keys2).toEqual(["key2"]);
+    });
+    it("should get keys of a given class/method", async () => {
+      const cacheManager = PlatformTest.get<PlatformCache>(PlatformCache);
+
+      class Test {
+        @UseCache({
+          prefix: "TEST"
+        })
+        async test() {}
+      }
+
+      const prefix = getPrefix(Test, "test");
+
+      await cacheManager.set(prefix + ":arg", "value");
+      await cacheManager.set(prefix + ":arg2", "value2");
+
+      const keys = await cacheManager.getKeysOf(Test, "test");
+
+      expect(keys).toEqual(["TEST:arg", "TEST:arg2"]);
+    });
+
+    it("should delete matching keys (native)", async () => {
+      const cacheManager = PlatformTest.get<PlatformCache>(PlatformCache);
+
+      await cacheManager.set("key", "value");
+      await cacheManager.set("key2", "value2");
+
+      const keys1 = await cacheManager.keys("key*");
+      const keys2 = await cacheManager.deleteKeys("key*");
+
+      expect(keys1).toEqual(["key", "key2"]);
+      expect(keys2).toEqual(["key", "key2"]);
     });
 
     it("should delete matching keys", async () => {
@@ -179,6 +213,15 @@ describe("PlatformCache", () => {
 
         const result = await cacheManager.ttl("test");
         expect(result).toEqual(10);
+      });
+
+      it("return undefined when store isn't defined", async () => {
+        const cacheManager: any = PlatformTest.get<PlatformCache>(PlatformCache);
+
+        delete cacheManager.cache.store.ttl;
+
+        const result = await cacheManager.ttl("test");
+        expect(result).toEqual(undefined);
       });
     });
     describe("getCachedObject()", () => {
@@ -226,6 +269,19 @@ describe("PlatformCache", () => {
         });
       });
     });
+    describe("refresh()", () => {
+      it("should set the call context with forceRefresh to true", async () => {
+        const cacheManager = PlatformTest.get<PlatformCache>(PlatformCache);
+
+        expect(cacheManager.isForceRefresh()).toEqual(false);
+
+        await cacheManager.refresh(() => {
+          expect(cacheManager.isForceRefresh()).toEqual(true);
+        });
+
+        expect(cacheManager.isForceRefresh()).toEqual(false);
+      });
+    });
   });
   describe("with multiple cache", () => {
     let caching: ReturnType<typeof createCacheFixture>;
@@ -262,8 +318,8 @@ describe("PlatformCache", () => {
 
       expect(await cacheManager.get("key")).toBeUndefined();
 
-      const result = await cacheManager.wrap("key", async () => {
-        return "valuePromised";
+      const result = await cacheManager.wrap("key", () => {
+        return Promise.resolve("valuePromised");
       });
 
       expect(result).toBe("valuePromised");
@@ -294,9 +350,10 @@ describe("PlatformCache", () => {
       await cacheManager.reset();
 
       expect(await cacheManager.get("key")).toBeUndefined();
+      expect(await cacheManager.keys()).toEqual([]);
 
-      const result = await cacheManager.wrap("key", async () => {
-        return "valuePromised";
+      const result = await cacheManager.wrap("key", () => {
+        return Promise.resolve("valuePromised");
       });
 
       expect(result).toBe("valuePromised");

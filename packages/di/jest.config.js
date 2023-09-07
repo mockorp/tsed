@@ -2,8 +2,13 @@
 // https://jestjs.io/docs/en/configuration.html
 
 module.exports = {
-  ...require("@tsed/jest-config")(__dirname, "di"),
+  ...require("@tsed/jest-config"),
   coverageThreshold: {
-    global: require("./coverage.json")
+    global: {
+      statements: 98.81,
+      branches: 96.55,
+      lines: 98.81,
+      functions: 98.34
+    }
   }
 };

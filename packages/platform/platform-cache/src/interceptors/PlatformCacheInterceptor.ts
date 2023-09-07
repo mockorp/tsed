@@ -7,6 +7,8 @@ import {IncomingMessage, ServerResponse} from "http";
 import {PlatformCachedObject} from "../interfaces/PlatformCachedObject";
 import {PlatformCacheOptions} from "../interfaces/PlatformCacheOptions";
 import {PlatformCache} from "../services/PlatformCache";
+import {getPrefix} from "../utils/getPrefix";
+import {isEndpoint} from "../utils/isEndpoint";
 
 const cleanHeaders = (headers: Record<string, unknown>) => {
   return Object.entries(headers)
@@ -30,19 +32,29 @@ export class PlatformCacheInterceptor implements InterceptorMethods {
   @Inject()
   protected logger: Logger;
 
-  async intercept(context: InterceptorContext<any, PlatformCacheOptions>, next: InterceptorNext) {
+  intercept(context: InterceptorContext<any, PlatformCacheOptions>, next: InterceptorNext) {
     if (this.cache.disabled()) {
       return next();
     }
 
-    if (!this.isEndpoint(context)) {
+    if (!isEndpoint(context.target, context.propertyKey)) {
       return this.cacheMethod(context, next);
     }
 
     return this.cacheResponse(context, next);
   }
 
-  async canRefreshInBackground(key: string, {refreshThreshold, ttl}: {refreshThreshold?: number; ttl: any}, next: Function) {
+  async canRefreshInBackground(
+    key: string,
+    {
+      refreshThreshold,
+      ttl
+    }: {
+      refreshThreshold?: number;
+      ttl: any;
+    },
+    next: Function
+  ) {
     const inQueue = await this.hasKeyInQueue(key);
 
     if (refreshThreshold && !inQueue) {
@@ -60,27 +72,31 @@ export class PlatformCacheInterceptor implements InterceptorMethods {
   }
 
   async cacheMethod(context: InterceptorContext<any, PlatformCacheOptions>, next: InterceptorNext) {
-    const {type, ttl, collectionType, refreshThreshold, keyArgs, args} = this.getOptions(context);
-    const key = [nameOf(context.target), context.propertyKey, keyArgs].join(":");
+    const {key, type, ttl, collectionType, refreshThreshold, keyArgs, args, canCache} = this.getOptions(context);
 
     const set = (result: any) => {
-      const calculatedTTL = this.cache.calculateTTL(result, ttl);
-      const data = serialize(result, {type, collectionType});
-      this.cache.setCachedObject(key, data, {args, ttl: calculatedTTL});
+      if (!canCache || (canCache && canCache(result))) {
+        const calculatedTTL = this.cache.calculateTTL(result, ttl);
+        const data = serialize(result, {type, collectionType});
+        this.cache.setCachedObject(key, data, {args, ttl: calculatedTTL});
+      }
     };
 
     const cachedObject = await this.cache.getCachedObject(key);
 
-    if (!cachedObject) {
+    if (!cachedObject || this.cache.isForceRefresh()) {
       const result = await next();
 
-      set(result);
+      if (!(!cachedObject && this.cache.isForceRefresh())) {
+        set(result);
+      }
 
       return result;
     }
 
     this.canRefreshInBackground(key, {refreshThreshold, ttl}, async () => {
       const result = await next();
+
       await set(result);
     }).catch((er) =>
       this.logger.error({
@@ -100,15 +116,13 @@ export class PlatformCacheInterceptor implements InterceptorMethods {
   }
 
   async cacheResponse(context: InterceptorContext<any, PlatformCacheOptions>, next: InterceptorNext) {
-    const $ctx: BaseContext = context.args[context.args.length - 1];
-    const {request, response} = $ctx;
+    const {request, response} = context.args[context.args.length - 1];
 
     if (request.method !== "GET") {
       return next();
     }
 
-    const {ttl, args, keyArgs} = this.getOptions(context);
-    const key = [request.method, request.url, keyArgs].join(":");
+    const {key, ttl, args, $ctx} = this.getOptions(context);
 
     const cachedObject = await this.cache.getCachedObject(key);
 
@@ -125,7 +139,7 @@ export class PlatformCacheInterceptor implements InterceptorMethods {
     });
 
     // cache final response with his headers and body
-    response.onEnd(async () => {
+    response.onEnd(() => {
       this.cache.setCachedObject(key, response.getBody(), {
         ttl: calculatedTTL,
         args,
@@ -151,16 +165,30 @@ export class PlatformCacheInterceptor implements InterceptorMethods {
   }
 
   protected getOptions(context: InterceptorContext<any, PlatformCacheOptions>) {
+    const $ctx = context.args[context.args.length - 1];
+
     const {ttl, type, collectionType, key: k = this.cache.defaultKeyResolver(), refreshThreshold} = context.options || {};
+
+    let {canCache} = context.options || {};
 
     const args = this.getArgs(context);
     const keyArgs = isString(k) ? k : k(args);
 
-    return {refreshThreshold, ttl, type, args, collectionType, keyArgs};
-  }
+    if (canCache && canCache === "no-nullish") {
+      canCache = (item: any) => ![null, undefined].includes(item);
+    }
 
-  protected isEndpoint({target, propertyKey}: InterceptorContext<any, PlatformCacheOptions>) {
-    return Store.fromMethod(target, propertyKey).has(JsonEntityStore);
+    return {
+      key: [...getPrefix(context.target, context.propertyKey), keyArgs].join(":"),
+      refreshThreshold,
+      ttl,
+      type,
+      args,
+      collectionType,
+      keyArgs,
+      canCache,
+      $ctx
+    };
   }
 
   protected async hasKeyInQueue(key: string) {

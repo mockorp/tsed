@@ -2,7 +2,7 @@ import {$log, BodyParams, Controller, Get, PlatformResponse, Post, QueryParams, 
 import {Returns} from "@tsed/schema";
 import {promisify} from "util";
 import {agent, SuperAgentStatic} from "superagent";
-import {PlatformExpress} from "../../src";
+import {PlatformExpress} from "../../src/index";
 import {Server} from "./Server";
 
 if (process.env.NODE_ENV !== "test") {
@@ -36,7 +36,7 @@ if (process.env.NODE_ENV !== "test") {
 
     @Post("/")
     @Returns(200)
-    async postPayload(@BodyParams() body: any[]) {
+    postPayload(@BodyParams() body: any[]) {
       return {body};
     }
   }

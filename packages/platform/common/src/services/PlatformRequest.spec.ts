@@ -1,5 +1,6 @@
-import {PlatformHandlerMetadata, PlatformTest} from "@tsed/common";
+import {PlatformHandlerMetadata} from "@tsed/platform-router";
 import {PlatformRequest} from "./PlatformRequest";
+import {PlatformTest} from "./PlatformTest";
 
 function createRequest() {
   const $ctx = PlatformTest.createRequestContext();
@@ -24,6 +25,8 @@ describe("PlatformRequest", () => {
     expect($ctx.request.raw).toEqual(request);
     expect($ctx.request.response).toEqual($ctx.response);
     expect($ctx.request.headers).toEqual({});
+    expect($ctx.request.get("host")).toEqual(undefined);
+    expect($ctx.request.getHeader("host")).toEqual(undefined);
     expect($ctx.request.method).toEqual("GET");
   });
 

@@ -20,9 +20,15 @@ export interface JsonSchemaOptions {
    */
   groups?: string[] | false;
   /**
+   * Set the postfix groups name for generated model and ref.
+   */
+  groupsName?: string;
+  /**
    * Generate custom keys when SpecType is JSON.
    */
   customKeys?: boolean;
+
+  inlineEnums?: boolean;
 
   [key: string]: any;
 }

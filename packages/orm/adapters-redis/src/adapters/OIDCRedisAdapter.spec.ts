@@ -1,5 +1,4 @@
 import {Adapters} from "@tsed/adapters";
-import {LocalsContainer, PlatformTest} from "@tsed/common";
 import {IORedisTest, registerConnectionProvider} from "@tsed/ioredis";
 import Redis from "ioredis";
 // @ts-ignore
@@ -13,8 +12,7 @@ const REDIS_CONNECTION = Symbol.for("redis_connection");
 registerConnectionProvider({
   provide: REDIS_CONNECTION
 });
-
-async function createAdapterFixture(collectionName: string) {
+function createAdapterFixture(collectionName: string) {
   const adapter = IORedisTest.get<Adapters>(Adapters).invokeAdapter({
     collectionName,
     model: Object,

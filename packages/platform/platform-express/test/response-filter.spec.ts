@@ -1,9 +1,9 @@
 import {Context, Controller, Get, PlatformTest, Res, ResponseFilter} from "@tsed/common";
-import {PlatformTestUtils} from "@tsed/platform-test-utils";
+import {PlatformTestSdk} from "@tsed/platform-test-sdk";
 import {Returns} from "@tsed/schema";
 import {ServerResponse} from "http";
 import SuperTest from "supertest";
-import {PlatformExpress} from "../src";
+import {PlatformExpress} from "../src/index";
 import {rootDir, Server} from "./app/Server";
 
 @ResponseFilter("plain/text")
@@ -14,7 +14,7 @@ class PlainTextFilter {
   }
 }
 
-const utils = PlatformTestUtils.create({
+const utils = PlatformTestSdk.create({
   rootDir,
   platform: PlatformExpress,
   server: Server,
@@ -27,19 +27,19 @@ const utils = PlatformTestUtils.create({
 class TestPageableCtrl {
   @Get("/scenario-1")
   @Returns(200).ContentType("image/png")
-  async scenario1() {
+  scenario1() {
     const raw = "...";
     // response.setHeader('Content-Type', 'image/png');
 
-    return Buffer.from(raw, "base64");
+    return Promise.resolve(Buffer.from(raw, "base64"));
   }
 
   @Get("/scenario-2")
-  async scenario2(@Res() response: ServerResponse) {
+  scenario2(@Res() response: ServerResponse) {
     const raw = "...";
     response.setHeader("Content-Type", "image/png");
 
-    return Buffer.from(raw, "base64");
+    return Promise.resolve(Buffer.from(raw, "base64"));
   }
 }
 

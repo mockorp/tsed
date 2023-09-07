@@ -2,8 +2,13 @@
 // https://jestjs.io/docs/en/configuration.html
 
 module.exports = {
-  ...require("@tsed/jest-config")(__dirname, "platform-response-filter"),
+  ...require("@tsed/jest-config"),
   coverageThreshold: {
-    global: require("./coverage.json")
+    global: {
+      statements: 100,
+      branches: 97.72,
+      functions: 100,
+      lines: 100
+    }
   }
 };

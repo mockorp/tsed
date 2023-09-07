@@ -1,6 +1,6 @@
 {
   "name": "@tsed/perf",
-  "version": "7.3.1",
+  "version": "7.35.0",
   "description": "Perf module tool",
   "private": false,
   "source": "./src/index.ts",
@@ -14,15 +14,20 @@
     "default": "./lib/esm/index.js"
   },
   "scripts": {
-    "build": "yarn run build:esm && yarn run build:cjs",
-    "build:cjs": "tsc --build tsconfig.compile.json",
-    "build:esm": "tsc --build tsconfig.compile.esm.json"
+    "build": "yarn build:ts",
+    "build:ts": "tsc --build tsconfig.json && tsc --build tsconfig.esm.json",
+    "lint": "eslint '**/*.{ts,js}'",
+    "lint:fix": "eslint '**/*.{ts,js}' --fix"
   },
   "dependencies": {
-    "@tsed/core": "7.3.1",
+    "@tsed/core": "7.35.0",
     "chalk": "^4.1.0",
-    "tslib": "2.4.0"
+    "tslib": "2.5.0"
   },
-  "devDependencies": {},
+  "devDependencies": {
+    "@tsed/eslint": "7.35.0",
+    "@tsed/typescript": "7.35.0",
+    "eslint": "^8.12.0"
+  },
   "peerDependencies": {}
 }

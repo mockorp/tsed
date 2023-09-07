@@ -1,7 +1,7 @@
 import {Constant, PlatformContext} from "@tsed/common";
 import {Injectable} from "@tsed/di";
-import {renderPage} from "vite-plugin-ssr";
-
+import {Writable} from "stream";
+import {renderPage} from "vite-plugin-ssr/server";
 import {ViteConfig} from "../interfaces/ViteConfig";
 import {ViteRenderContext} from "../interfaces/ViteRenderContext";
 
@@ -10,8 +10,14 @@ export class ViteService {
   @Constant("vite", {})
   protected config: ViteConfig;
 
-  async render(viewPath: string, $ctx: PlatformContext) {
-    const url = $ctx.request.url;
+  @Constant("vite.enableStream", false)
+  private enableStream: boolean;
+
+  async render(
+    viewPath: string,
+    {$ctx, ...opts}: {$ctx: PlatformContext} & Record<string, any>
+  ): Promise<string | {pipe(stream: Writable): void} | undefined> {
+    const urlOriginal = $ctx.request.url;
 
     const {data} = $ctx;
     const view = viewPath.replace(".vite", "");
@@ -19,36 +25,45 @@ export class ViteService {
     const pageProps = {
       view,
       ...$ctx.response.locals,
+      ...opts,
       ...data
     };
 
     const contextProps: ViteRenderContext = {
-      view,
       host: $ctx.request.host,
       protocol: $ctx.request.protocol,
       method: $ctx.request.method,
-      url,
+      url: urlOriginal,
       secure: $ctx.request.secure,
       headers: $ctx.request.headers,
       session: $ctx.request.session,
-      stateSnapshot: this.config.stateSnapshot && this.config.stateSnapshot(),
-      data: pageProps
+      stateSnapshot: this.config.stateSnapshot && this.config.stateSnapshot()
     };
 
     const pageContext = await renderPage({
-      url,
+      view,
+      urlOriginal,
       pageProps,
       contextProps
     });
 
+    if (pageContext.errorWhileRendering) {
+      $ctx.logger.error({
+        event: "VITE_RENDER_ERROR",
+        error: pageContext.errorWhileRendering
+      });
+    }
+
     if (pageContext.httpResponse) {
-      const {
-        httpResponse: {body, statusCode, contentType}
-      } = pageContext;
+      const {httpResponse} = pageContext;
 
-      $ctx.response.status(statusCode).setHeader("Content-Type", contentType);
+      $ctx.response.contentType(httpResponse.contentType).status(httpResponse.statusCode);
 
-      return body;
+      if (this.enableStream) {
+        return httpResponse;
+      }
+
+      return httpResponse.body;
     }
   }
 }

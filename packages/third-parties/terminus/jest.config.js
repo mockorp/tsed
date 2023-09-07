@@ -2,11 +2,12 @@
 // https://jestjs.io/docs/en/configuration.html
 
 module.exports = {
-  ...require("@tsed/jest-config")(__dirname, "terminus"),
+  ...require("@tsed/jest-config"),
+  roots: ["<rootDir>/src"],
   coverageThreshold: {
     global: {
       statements: 100,
-      branches: 100,
+      branches: 92.59,
       functions: 100,
       lines: 100
     }

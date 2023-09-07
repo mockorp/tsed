@@ -4,6 +4,7 @@ import {Middleware, MiddlewareMethods} from "@tsed/platform-middlewares";
 import {Context} from "@tsed/platform-params";
 import type {MulterError} from "multer";
 import {PlatformMulterField, PlatformMulterSettings} from "../config/interfaces/PlatformMulterSettings";
+import {PlatformContext} from "../domain/PlatformContext";
 import {PlatformApplication} from "../services/PlatformApplication";
 
 export interface MulterInputOptions {
@@ -29,7 +30,7 @@ export class PlatformMulterMiddleware implements MiddlewareMethods {
   @Inject()
   protected app: PlatformApplication;
 
-  async use(@Context() ctx: Context) {
+  async use(@Context() ctx: PlatformContext) {
     try {
       const {fields, options = {}} = ctx.endpoint.get(PlatformMulterMiddleware);
       const settings: PlatformMulterSettings = {

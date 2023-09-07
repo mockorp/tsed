@@ -41,7 +41,7 @@ export class LowDbAdapter<T extends AdapterModel> extends Adapter<T> {
     let item = await this.findById(id);
 
     if (!item) {
-      payload = {...payload, _id: id || uuid()};
+      payload._id = id || uuid();
 
       await this.validate(payload as T);
 
@@ -56,7 +56,7 @@ export class LowDbAdapter<T extends AdapterModel> extends Adapter<T> {
     return (await this.update(id, payload, expiresAt)) as T;
   }
 
-  public async update(id: string, payload: T, expiresAt?: Date): Promise<T | undefined> {
+  update(id: string, payload: T, expiresAt?: Date): Promise<T | undefined> {
     return this.updateOne({_id: id}, payload, expiresAt);
   }
 
@@ -69,11 +69,7 @@ export class LowDbAdapter<T extends AdapterModel> extends Adapter<T> {
 
     let item = this.deserialize(this.collection.get(index).value());
 
-    item = {
-      ...item,
-      ...payload,
-      _id: item._id
-    };
+    Object.assign(item, payload, {_id: item._id});
 
     await this.validate(item as T);
 
@@ -84,34 +80,38 @@ export class LowDbAdapter<T extends AdapterModel> extends Adapter<T> {
     return this.deserialize(item);
   }
 
-  async findOne(predicate: Partial<T & any>): Promise<T | undefined> {
+  findOne(predicate: Partial<T & any>): Promise<T | undefined> {
     const item = this.collection.find(cleanObject(predicate)).value();
 
     return this.deserialize(item);
   }
 
-  async findById(_id: string): Promise<T | undefined> {
+  findById(_id: string): Promise<T | undefined> {
     return this.findOne({_id});
   }
 
-  public async findAll(predicate: Partial<T & any> = {}): Promise<T[]> {
-    return this.collection
-      .filter(cleanObject(predicate))
-      .value()
-      .map((item) => this.deserialize(item));
+  public findAll(predicate: Partial<T & any> = {}): Promise<T[]> {
+    return Promise.resolve(
+      this.collection
+        .filter(cleanObject(predicate))
+        .value()
+        .map((item) => this.deserialize(item))
+    );
   }
 
-  public async deleteOne(predicate: Partial<T & any>): Promise<T | undefined> {
+  public deleteOne(predicate: Partial<T & any>): Promise<T | undefined> {
     const item = this.collection.find(cleanObject(predicate)).value();
 
     if (item) {
       this.collection.remove(({_id}) => _id === item._id).write();
 
-      return this.deserialize(item);
+      return Promise.resolve(this.deserialize(item));
     }
+
+    return Promise.resolve(undefined);
   }
 
-  public async deleteById(_id: string): Promise<T | undefined> {
+  public deleteById(_id: string): Promise<T | undefined> {
     return this.deleteOne({_id} as any);
   }
 

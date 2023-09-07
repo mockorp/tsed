@@ -1,6 +1,7 @@
 import {Constant, Inject, InjectorService, OnReady, OnRoutesInit, PlatformApplication, PlatformRouteDetails} from "@tsed/common";
-import {deepClone, normalizePath} from "@tsed/core";
+import {deepClone} from "@tsed/core";
 import {Module} from "@tsed/di";
+import {normalizePath} from "@tsed/normalize-path";
 import {AlterActions} from "./components/AlterActions";
 import {AlterAudit} from "./components/AlterAudit";
 import {AlterHost} from "./components/AlterHost";
@@ -64,7 +65,7 @@ export class FormioModule implements OnRoutesInit, OnReady {
     return this.init(deepClone(this.settings));
   }
 
-  async init(options: FormioConfig) {
+  init(options: FormioConfig) {
     return this.formio.init(options, this.hooks.getHooks());
   }
 
@@ -110,7 +111,7 @@ export class FormioModule implements OnRoutesInit, OnReady {
   }
 
   // istanbul ignore next
-  async $onReady(): Promise<void> {
+  $onReady() {
     if (this.formio.isInit() && "getBestHost" in this.injector.settings) {
       const {injector} = this;
       // @ts-ignore

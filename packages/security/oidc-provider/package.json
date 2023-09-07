@@ -1,11 +1,14 @@
 {
   "name": "@tsed/oidc-provider",
-  "version": "7.3.1",
+  "version": "7.35.0",
   "description": "OIDC provider package for Ts.ED framework",
   "private": false,
   "contributors": [
     {
       "name": "romakita"
+    },
+    {
+      "name": "camfou"
     },
     {
       "name": "stefanvanherwijnen"
@@ -22,39 +25,64 @@
     "default": "./lib/esm/index.js"
   },
   "scripts": {
-    "build": "yarn barrels && yarn run build:esm && yarn run build:cjs",
-    "build:cjs": "tsc --build tsconfig.compile.json",
-    "build:esm": "tsc --build tsconfig.compile.esm.json",
-    "start": "ts-node -r tsconfig-paths/register test/app/index.ts",
+    "build": "yarn barrels && yarn build:ts",
+    "start": "ts-node test/app/index.ts",
     "barrels": "yarn barrelsby --delete -d ./src -e \"\\.spec\\.ts\" -e \"__mock__\" -e \".benchmark.ts\"",
-    "test": "cross-env NODE_ENV=test yarn jest --max-workers=2"
+    "test": "cross-env NODE_ENV=test yarn jest --max-workers=2 && jest-coverage-thresholds-bumper",
+    "build:ts": "tsc --build tsconfig.json && tsc --build tsconfig.esm.json",
+    "lint": "eslint '**/*.{ts,js}'",
+    "lint:fix": "eslint '**/*.{ts,js}' --fix"
   },
   "dependencies": {
-    "@tsed/adapters": "7.3.1",
+    "@tsed/adapters": "7.35.0",
     "express-urlrewrite": "^1.4.0",
     "jose2": "npm:jose@^2.0.4",
     "koa-mount": "^4.0.0",
     "koa-rewrite": "^3.0.1",
-    "tslib": "2.4.0",
+    "tslib": "2.5.0",
     "uuid": "8.3.2"
   },
   "devDependencies": {
-    "@tsed/common": "7.3.1",
-    "@tsed/core": "7.3.1",
-    "@tsed/di": "7.3.1",
-    "@tsed/exceptions": "7.3.1",
+    "@tsed/common": "7.35.0",
+    "@tsed/core": "7.35.0",
+    "@tsed/di": "7.35.0",
+    "@tsed/eslint": "7.35.0",
+    "@tsed/exceptions": "7.35.0",
+    "@tsed/jwks": "7.35.0",
+    "@tsed/typescript": "7.35.0",
     "@types/lowdb": "1.0.11",
-    "@types/oidc-provider": "^7.1.1",
+    "@types/oidc-provider": "8.1.1",
     "@types/uuid": "8.3.4",
+    "eslint": "^8.12.0",
     "lowdb": "3.0.0",
-    "oidc-provider": "7.11.1"
+    "oidc-provider": "8.1.1"
   },
   "peerDependencies": {
-    "@tsed/common": "^7.3.1",
-    "oidc-provider": ">=7.3.0"
+    "@tsed/ajv": "^7.35.0",
+    "@tsed/common": "^7.35.0",
+    "@tsed/core": "^7.35.0",
+    "@tsed/di": "^7.35.0",
+    "@tsed/json-mapper": "^7.35.0",
+    "@tsed/schema": "^7.35.0",
+    "oidc-provider": ">=8.0.0"
   },
   "peerDependenciesMeta": {
     "@tsed/common": {
+      "optional": false
+    },
+    "@tsed/ajv": {
+      "optional": false
+    },
+    "@tsed/core": {
+      "optional": false
+    },
+    "@tsed/di": {
+      "optional": false
+    },
+    "@tsed/json-mapper": {
+      "optional": false
+    },
+    "@tsed/schema": {
       "optional": false
     }
   }

@@ -1,12 +1,16 @@
 import "@tsed/ajv";
 import {Configuration, Controller, Get, PlatformTest} from "@tsed/common";
 import {PlatformExpress} from "@tsed/platform-express";
-import {PlatformTestUtils} from "@tsed/platform-test-utils";
+import {PlatformTestSdk} from "@tsed/platform-test-sdk";
 import bodyParser from "body-parser";
 import compress from "compression";
 import cookieParser from "cookie-parser";
+import filedirname from "filedirname";
 import methodOverride from "method-override";
 import SuperTest from "supertest";
+
+// FIXME remove when esm is ready
+const [, rootDir] = filedirname();
 
 @Controller("/hello")
 class TestHelloWorld {
@@ -28,8 +32,8 @@ class TestHelloWorld {
 })
 export class Server {}
 
-const utils = PlatformTestUtils.create({
-  rootDir: __dirname,
+const utils = PlatformTestSdk.create({
+  rootDir,
   platform: PlatformExpress,
   server: Server,
   logger: {

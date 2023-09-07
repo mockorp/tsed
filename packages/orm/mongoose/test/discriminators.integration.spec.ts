@@ -2,7 +2,7 @@ import {TestMongooseContext} from "@tsed/testing-mongoose";
 import {Server} from "./helpers/Server";
 import {MongooseModel} from "../src/interfaces/MongooseModel";
 import {Required} from "@tsed/schema";
-import {ObjectID, DiscriminatorKey, Model} from "../src";
+import {ObjectID, DiscriminatorKey, Model} from "../src/index";
 
 describe("Mongoose", () => {
   describe("Discriminators", () => {
@@ -18,7 +18,7 @@ describe("Mongoose", () => {
       type: string;
     }
 
-    @Model()
+    @Model({discriminatorValue: "ClickedLinkEventModel"})
     class ClickedLinkEventModel extends EventModel {
       @Required()
       url: string;

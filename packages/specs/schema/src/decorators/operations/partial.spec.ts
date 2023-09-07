@@ -12,7 +12,7 @@ import {
   RequiredGroups,
   Returns,
   SpecTypes
-} from "@tsed/schema";
+} from "../../index";
 import {Partial} from "./partial";
 
 class ChildModel {
@@ -50,7 +50,7 @@ describe("@Partial", () => {
       class MyController {
         @OperationPath("PATCH", "/")
         @Returns(200, MyModel).Groups("group.*")
-        async patch(@In("body") @Partial() payload: MyModel) {
+        patch(@In("body") @Partial() payload: MyModel) {
           return new MyModel();
         }
       }

@@ -2,13 +2,17 @@
 // https://jestjs.io/docs/en/configuration.html
 
 module.exports = {
-  ...require("@tsed/jest-config")(__dirname, "mongoose"),
+  ...require("@tsed/jest-config"),
+  roots: ["<rootDir>/src", "<rootDir>/test"],
+  moduleNameMapper: {
+    "@tsed/mongoose": "<rootDir>/src/index.ts"
+  },
   coverageThreshold: {
     global: {
-      branches: 93.45,
-      functions: 98.9,
-      lines: 98.9,
-      statements: 98.93
+      statements: 99.06,
+      branches: 95.43,
+      functions: 99,
+      lines: 99.06
     }
   }
 };

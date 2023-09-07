@@ -1,5 +1,5 @@
 import {InjectorService, Provider, Service} from "@tsed/common";
-import SocketIO from "socket.io"; // tslint:disable-line: no-unused-variable
+import * as SocketIO from "socket.io"; // tslint:disable-line: no-unused-variable
 import {SocketHandlersBuilder} from "../class/SocketHandlersBuilder";
 import {SocketProviderMetadata} from "../class/SocketProviderMetadata";
 import {IO} from "../decorators/io";
@@ -33,9 +33,9 @@ export class SocketIOService {
           builder.onConnection(socket, conf.nsp);
         });
 
-        socket.on("disconnect", () => {
+        socket.on("disconnect", (reason: string) => {
           conf.instances.forEach((builder: SocketHandlersBuilder) => {
-            builder.onDisconnect(socket, conf.nsp);
+            builder.onDisconnect(socket, conf.nsp, reason);
           });
         });
       });

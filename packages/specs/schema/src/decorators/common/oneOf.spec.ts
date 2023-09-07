@@ -1,4 +1,4 @@
-import {AllOf, getJsonSchema, getSpec, In, OneOf, OperationPath, Path, Property, SpecTypes} from "@tsed/schema";
+import {AllOf, getJsonSchema, getSpec, In, OneOf, OperationPath, Path, Property, SpecTypes} from "../../index";
 import {number, string} from "../../utils/from";
 
 describe("@OneOf", () => {
@@ -23,6 +23,39 @@ describe("@OneOf", () => {
               type: "number"
             }
           ]
+        }
+      },
+      type: "object"
+    });
+  });
+  it("should declare return schema for only one model", () => {
+    // WHEN
+    class Nested {
+      @Property()
+      id: string;
+    }
+    class Model {
+      @OneOf(Nested)
+      num: string;
+    }
+
+    // THEN
+    const schema = getJsonSchema(Model);
+
+    expect(schema).toEqual({
+      definitions: {
+        Nested: {
+          properties: {
+            id: {
+              type: "string"
+            }
+          },
+          type: "object"
+        }
+      },
+      properties: {
+        num: {
+          $ref: "#/definitions/Nested"
         }
       },
       type: "object"

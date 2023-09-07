@@ -1,6 +1,14 @@
+import {Injectable, PlatformTest} from "@tsed/common";
 import {requires} from "@tsed/engines";
-import {PlatformTest} from "@tsed/common";
 import {PlatformViews} from "./PlatformViews";
+
+@Injectable()
+class AlterOptions {
+  $alterRenderOptions(options: any) {
+    options.alter = "alter";
+    return Promise.resolve(options);
+  }
+}
 
 describe("PlatformViews", () => {
   beforeEach(() =>
@@ -36,6 +44,7 @@ describe("PlatformViews", () => {
       expect(result).toEqual("HTML");
       expect(engine.render).toBeCalledWith("views.ejs", {
         cache: false,
+        alter: "alter",
         global: "global",
         requires: "requires"
       });
@@ -53,6 +62,7 @@ describe("PlatformViews", () => {
         cache: false,
         global: "global",
         test: "test",
+        alter: "alter",
         requires: "requires"
       });
     });

@@ -1,9 +1,9 @@
-import {DITest, DITestOptions} from "@tsed/di";
+import {DITest} from "@tsed/di";
 import {mockConnections} from "../utils/mockConnections";
 
 export class IORedisTest extends DITest {
-  static async create(options?: DITestOptions) {
-    const imports = mockConnections();
+  static async create(options?: Partial<TsED.Configuration>) {
+    const imports = await mockConnections();
 
     await Promise.all(imports.map(({use}) => use.flushall()));
 

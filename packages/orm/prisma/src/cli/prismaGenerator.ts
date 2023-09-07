@@ -5,8 +5,9 @@ import {generateCode} from "../generator/generateCode";
 import removeDir from "../generator/utils/removeDir";
 import path, {join} from "path";
 
-export const defaultOutput = join(__dirname, "..", ".schema");
-export const packageDir = join(__dirname, "..", "..", "..");
+const rootDir = __dirname;
+export const defaultOutput = join(rootDir, "..", ".schema");
+export const packageDir = join(rootDir, "..", "..", "..");
 
 function parseStringBoolean(stringBoolean: string | undefined) {
   return Boolean(stringBoolean ? stringBoolean === "true" : undefined);

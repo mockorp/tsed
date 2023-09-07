@@ -31,6 +31,14 @@ Connect™ protocol
 
 <Projects type="projects"/>
 
+## OIDC compatibility
+
+- For OIDC v7, use `@tsed/oidc-provider` v7.19 and under
+- For OIDC v8, use `@tsed/oidc-provider` v7.21 and higher
+
+Since the v8, have changed the exported Provider (named by default) and the entire is under ESM convention, Ts.ED isn't
+able to maintain the v7 and v8 at the same time.
+
 ## Features
 
 Ts.ED provides decorators and services to create an OIDC provider with your Ts.ED application.
@@ -292,6 +300,17 @@ GET `/interation/:uid`
 The `uid` is the unique session id used by oidc-provider to identify the current user flow.
 :::
 
+::: tip Note
+
+`children` option define the priority order of each interaction. In our example, LoginInteraction have a priority over
+ContentInteraction, CustomInteraction and AbortInteraction.
+Changing order her may affect the interaction behavior when the `/authorize` endpoint is called by the consumer.
+
+Another possibility is to define `priority` option on @@Interaction@@ decorator. In this case, the `children` order
+won't be
+had an effect on the interaction priority.
+:::
+
 Now that we have our interaction controller, we can create our first interaction.
 
 Create a new directory `interactions`. We will store all custom interactions in this directory.
@@ -521,7 +540,7 @@ sponsor, so we can continue maintaining it and adding new features carefree.
 
 ## Maintainers
 
-<GithubContributors users="['Romakita']"/>
+<GithubContributors users="['Romakita', 'camfou']"/>
 
 <div class="flex items-center justify-center p-5">
 <Button href="/contributing.html" class="rounded-medium">

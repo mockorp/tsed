@@ -2,13 +2,13 @@
 // https://jestjs.io/docs/en/configuration.html
 
 module.exports = {
-  ...require("@tsed/jest-config")(__dirname, "adapters-redis"),
+  ...require("@tsed/jest-config"),
   coverageThreshold: {
     global: {
-      branches: 70,
-      functions: 70,
-      lines: 70,
-      statements: 70
+      branches: 93.68,
+      functions: 100,
+      lines: 100,
+      statements: 100
     }
   }
 };

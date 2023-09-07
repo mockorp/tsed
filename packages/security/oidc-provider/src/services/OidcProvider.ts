@@ -1,19 +1,30 @@
-import {PlatformApplication} from "@tsed/common";
+import {InjectContext, PlatformApplication, PlatformContext} from "@tsed/common";
 import {Env, setValue} from "@tsed/core";
 import {Constant, Inject, Injectable, InjectorService} from "@tsed/di";
-import {Configuration, interactionPolicy, Provider as OIDCProvider} from "oidc-provider";
+// @ts-ignore
+import type {Configuration, default as OIDCProvider, KoaContextWithOIDC} from "oidc-provider";
 import {INTERACTIONS} from "../constants/constants";
-import {InteractionMethods} from "../domain/InteractionMethods";
 import {OidcAccountsMethods} from "../domain/OidcAccountsMethods";
-import {OidcInteractionOptions} from "../domain/OidcInteractionOptions";
 import {OidcSettings} from "../domain/OidcSettings";
+import {OIDC_ERROR_EVENTS} from "../utils/events";
 import {OidcAdapters} from "./OidcAdapters";
 import {OidcInteractions} from "./OidcInteractions";
 import {OidcJwks} from "./OidcJwks";
+import {OidcPolicy} from "./OidcPolicy";
+import {OIDC_PROVIDER_NODE_MODULE, Provider} from "./OidcProviderNodeModule";
+
+function mapError(error: any) {
+  return Object.getOwnPropertyNames(error).reduce((obj: any, key) => {
+    return {
+      ...obj,
+      [key]: error[key]
+    };
+  }, {});
+}
 
 @Injectable()
 export class OidcProvider {
-  raw: OIDCProvider;
+  raw: Provider;
 
   @Constant("env")
   protected env: Env;
@@ -40,6 +51,9 @@ export class OidcProvider {
   protected oidcInteractions: OidcInteractions;
 
   @Inject()
+  protected oidcPolicy: OidcPolicy;
+
+  @Inject()
   protected adapters: OidcAdapters;
 
   @Inject()
@@ -47,6 +61,15 @@ export class OidcProvider {
 
   @Inject()
   protected app: PlatformApplication;
+
+  @InjectContext()
+  protected $ctx?: PlatformContext;
+
+  constructor(@Inject(OIDC_PROVIDER_NODE_MODULE) protected module: OIDC_PROVIDER_NODE_MODULE) {}
+
+  get logger() {
+    return this.$ctx?.logger || this.injector.logger;
+  }
 
   hasConfiguration() {
     return !!this.oidc;
@@ -85,7 +108,8 @@ export class OidcProvider {
       setValue(configuration, "cookies.long.secure", true);
     }
 
-    const policy = this.getPolicy();
+    const policy = this.oidcPolicy.getPolicy();
+
     if (policy) {
       setValue(configuration, "interactions.policy", policy);
     }
@@ -111,20 +135,20 @@ export class OidcProvider {
     return `http://localhost:${this.httpPort}`;
   }
 
-  get(): OIDCProvider {
+  get(): Provider {
     return this.raw;
   }
 
   /**
    * Create a new instance of OidcProvider
    */
-  async create(): Promise<void | OIDCProvider> {
+  async create(): Promise<void | Provider> {
     const {proxy = this.env === Env.PROD, secureKey, allowHttpLocalhost = this.env !== Env.PROD} = this.oidc;
     const configuration = await this.getConfiguration();
 
     await this.injector.alterAsync("$alterOidcConfiguration", configuration);
 
-    const oidcProvider = new OIDCProvider(this.getIssuer(), configuration);
+    const oidcProvider = new this.module.Provider(this.getIssuer(), configuration);
 
     if (proxy) {
       // istanbul ignore next
@@ -149,16 +173,30 @@ export class OidcProvider {
       this.allowHttpLocalhost();
     }
 
+    OIDC_ERROR_EVENTS.map((event) => {
+      this.raw.on(event, this.createErrorHandler(event));
+    });
+
     await this.injector.emit("$onCreateOIDC", this.raw);
 
     return this.raw;
   }
 
-  public createPrompt(instance: InteractionMethods, options: OidcInteractionOptions) {
-    const {checks: originalChecks = [], details, ...promptOptions} = options;
-    const checks = [...(instance.checks ? instance.checks() : originalChecks)].filter(Boolean);
+  private createErrorHandler(event: string) {
+    return (ctx: KoaContextWithOIDC, error: any, accountId?: string, sid?: string) => {
+      this.logger.error({
+        event: "OIDC_ERROR",
+        type: event,
+        error: mapError(error),
+        account_id: accountId,
+        params: ctx.oidc.params,
+        headers: ctx.headers,
+        sid
+      });
 
-    return new interactionPolicy.Prompt(promptOptions, instance.details ? instance.details.bind(instance) : details, ...checks);
+      // TODO see if we need to call platformExceptions
+      // this.platformExceptions.catch(error, ctx.request.$ctx);
+    };
   }
 
   private getInteractionsUrl() {
@@ -183,29 +221,5 @@ export class OidcProvider {
       /* istanbul ignore next */
       return orig.call(this, message);
     };
-  }
-
-  private getPolicy() {
-    const policy = interactionPolicy.base();
-    const interactions = this.oidcInteractions.getInteractions();
-
-    if (interactions.length) {
-      interactions.forEach((provider) => {
-        const instance = this.injector.get<InteractionMethods>(provider.token)!;
-        const options = provider.store.get("interactionOptions");
-
-        if (!policy.get(options.name)) {
-          const prompt = this.createPrompt(instance, options);
-
-          policy.add(prompt, options.priority);
-        }
-
-        if (instance.$onCreate) {
-          instance.$onCreate(policy.get(options.name)!);
-        }
-      });
-    }
-
-    return this.injector.alter("$alterOidcPolicy", policy);
   }
 }

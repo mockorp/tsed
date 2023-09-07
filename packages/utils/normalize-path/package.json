@@ -1,0 +1,35 @@
+{
+  "name": "@tsed/normalize-path",
+  "version": "7.35.0",
+  "description": "Utils to normalize path",
+  "private": false,
+  "source": "./src/index.ts",
+  "main": "./lib/cjs/index.js",
+  "module": "./lib/esm/index.js",
+  "typings": "./lib/types/index.d.ts",
+  "exports": {
+    "types": "./lib/types/index.d.ts",
+    "import": "./lib/esm/index.js",
+    "require": "./lib/cjs/index.js",
+    "default": "./lib/esm/index.js"
+  },
+  "scripts": {
+    "build": "yarn barrels && yarn build:ts",
+    "barrels": "yarn barrelsby --delete -d src -e \"\\.spec\\.ts\"",
+    "test": "cross-env NODE_ENV=test yarn jest --max-workers=2 && jest-coverage-thresholds-bumper",
+    "build:ts": "tsc --build tsconfig.json && tsc --build tsconfig.esm.json",
+    "lint": "eslint '**/*.{ts,js}'",
+    "lint:fix": "eslint '**/*.{ts,js}' --fix"
+  },
+  "dependencies": {
+    "normalize-path": "3.0.0",
+    "tslib": "2.5.0"
+  },
+  "devDependencies": {
+    "@tsed/eslint": "7.35.0",
+    "@tsed/typescript": "7.35.0",
+    "@types/normalize-path": "^3.0.0",
+    "eslint": "^8.12.0"
+  },
+  "peerDependencies": {}
+}

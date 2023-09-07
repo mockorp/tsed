@@ -4,8 +4,13 @@
 // https://jestjs.io/docs/en/configuration.html
 
 module.exports = {
-  ...require("@tsed/jest-config")(__dirname, "prisma"),
+  ...require("@tsed/jest-config"),
   coverageThreshold: {
-    global: require("./coverage.json")
+    global: {
+      statements: 98.8,
+      branches: 94.3,
+      functions: 96.96,
+      lines: 98.8
+    }
   }
 };

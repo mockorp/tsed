@@ -1,7 +1,11 @@
-import {PlatformTest} from "@tsed/common";
 import {PlatformViews} from "@tsed/platform-views";
+import filedirname from "filedirname";
 import {createReadStream} from "fs";
 import {PlatformResponse} from "./PlatformResponse";
+import {PlatformTest} from "./PlatformTest";
+
+// FIXME remove when esm is ready
+const [, rootDir] = filedirname();
 
 jest.mock("on-finished");
 
@@ -148,7 +152,7 @@ describe("PlatformResponse", () => {
     });
     it("should call body with stream", () => {
       const {res, response} = createResponse();
-      const stream = createReadStream(__dirname + "/__mock__/data.txt");
+      const stream = createReadStream(rootDir + "/__mock__/data.txt");
       jest.spyOn(stream, "pipe").mockReturnValue(undefined as any);
 
       response.body(stream);
@@ -241,6 +245,44 @@ describe("PlatformResponse", () => {
       response.onEnd(cb);
 
       expect(res.on).toHaveBeenCalledWith("finish", cb);
+    });
+  });
+  describe("cookie()", () => {
+    it("should manipulate cookies", () => {
+      const {res, response} = createResponse();
+
+      res.cookie = (...args: any[]) => {
+        let value = `${args[0]}=${args[1]}`;
+
+        if (!res.headers["set-cookie"]) {
+          res.headers["set-cookie"] = value;
+        } else {
+          res.headers["set-cookie"] = [].concat(res.headers["set-cookie"], value as any);
+        }
+      };
+
+      res.clearCookie = (name: string) => {
+        res.headers["set-cookie"] = res.headers["set-cookie"].filter((cookie: string) => cookie.startsWith(name + "="));
+      };
+
+      response.cookie("locale", "fr-FR");
+      expect(res.headers).toEqual({
+        "set-cookie": ["locale=fr-FR"],
+        "x-request-id": "id"
+      });
+
+      response.cookie("filename", "test");
+      expect(res.headers).toEqual({
+        "set-cookie": ["locale=fr-FR", "filename=test"],
+        "x-request-id": "id"
+      });
+
+      response.cookie("filename", null);
+
+      expect(res.headers).toEqual({
+        "set-cookie": ["filename=test"],
+        "x-request-id": "id"
+      });
     });
   });
 });

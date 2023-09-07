@@ -1,9 +1,10 @@
 import {GlobalProviders, TokenProvider} from "@tsed/di";
 import Redis from "ioredis";
-import RealIORedis from "ioredis-mock";
+
 import {IOREDIS_CONNECTIONS} from "./registerConnectionProvider";
 
-export function mockConnection(token: TokenProvider, name: string) {
+export async function mockConnection(token: TokenProvider, name: string) {
+  const {default: RealIORedis} = await import("ioredis-mock");
   const connection: Redis = new (RealIORedis as any)();
 
   (connection as any).name = name;
@@ -15,7 +16,9 @@ export function mockConnection(token: TokenProvider, name: string) {
 }
 
 export function mockConnections() {
-  return [...GlobalProviders.values()]
-    .filter((provider) => provider.type === IOREDIS_CONNECTIONS)
-    .map((provider) => mockConnection(provider.token, provider.connectionName));
+  return Promise.all(
+    [...GlobalProviders.values()]
+      .filter((provider) => provider.type === IOREDIS_CONNECTIONS)
+      .map((provider) => mockConnection(provider.token, provider.connectionName))
+  );
 }

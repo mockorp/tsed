@@ -1,16 +1,13 @@
 import {FileSyncAdapter} from "@tsed/adapters";
 import "@tsed/ajv";
-import {Constant, PlatformApplication} from "@tsed/common";
-import {Configuration, Inject} from "@tsed/di";
+import {Configuration} from "@tsed/di";
 import "@tsed/stripe";
 import "@tsed/swagger";
-import bodyParser from "body-parser";
-import compress from "compression";
-import cookieParser from "cookie-parser";
-import session from "express-session";
-import methodOverride from "method-override";
+import filedirname from "filedirname";
 
-export const rootDir = __dirname;
+// FIXME remove when esm is ready
+const [, rootDir] = filedirname();
+export {rootDir};
 
 @Configuration({
   port: 8081,
@@ -31,6 +28,24 @@ export const rootDir = __dirname;
       ejs: "ejs"
     }
   },
+  middlewares: [
+    "cookie-parser",
+    "compression",
+    "method-override",
+    "json-parser",
+    {use: "urlencoded-parser", options: {extended: true}},
+    {
+      use: "express-session",
+      options: {
+        secret: "keyboard cat", // change secret key
+        resave: false,
+        saveUninitialized: true,
+        cookie: {
+          secure: false // set true if HTTPS is enabled
+        }
+      }
+    }
+  ],
   swagger: [
     {
       path: "/v3/doc",
@@ -39,27 +54,4 @@ export const rootDir = __dirname;
     }
   ]
 })
-export class Server {
-  @Inject()
-  app: PlatformApplication;
-
-  @Constant("viewsDir")
-  viewsDir: string;
-
-  $beforeRoutesInit() {
-    this.app
-      .use(cookieParser())
-      .use(compress({}))
-      .use(methodOverride())
-      .use(
-        session({
-          secret: "keyboard cat", // change secret key
-          resave: false,
-          saveUninitialized: true,
-          cookie: {
-            secure: false // set true if HTTPS is enabled
-          }
-        })
-      );
-  }
-}
+export class Server {}

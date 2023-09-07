@@ -1,5 +1,5 @@
 import {Env, getValue} from "@tsed/core";
-import {Constant, Module} from "@tsed/di";
+import {Constant, Inject, InjectorService, Module} from "@tsed/di";
 import {engines, getEngine, requires} from "@tsed/engines";
 import Fs from "fs";
 import {extname, join, resolve} from "path";
@@ -7,7 +7,8 @@ import {
   PLATFORM_VIEWS_EXTENSIONS,
   PlatformViewEngine,
   PlatformViewsEngineOptions,
-  PlatformViewsExtensionsTypes
+  PlatformViewsExtensionsTypes,
+  PlatformViewWritableStream
 } from "../domain/PlatformViewsSettings";
 
 async function patchEJS(ejs: any) {
@@ -52,6 +53,9 @@ export class PlatformViews {
 
   @Constant("views.options", {})
   protected engineOptions: Record<string, PlatformViewsEngineOptions>;
+
+  @Inject()
+  protected injector: InjectorService;
 
   #extensions: Map<string, string>;
   #engines = new Map<string, PlatformViewEngine>();
@@ -114,7 +118,10 @@ export class PlatformViews {
     return getValue(this.engineOptions, engineType, {});
   }
 
-  async render(viewPath: string, options: any = {}): Promise<string> {
+  async render(viewPath: string, options: any = {}): Promise<string | PlatformViewWritableStream> {
+    const {$ctx} = options;
+    options = await this.injector.alterAsync("$alterRenderOptions", options, $ctx);
+
     const {path, extension} = this.#cachePaths.get(viewPath) || this.#cachePaths.set(viewPath, this.resolve(viewPath)).get(viewPath)!;
     const engine = this.getEngine(extension);
 
@@ -122,7 +129,9 @@ export class PlatformViews {
       throw new Error(`Engine not found to render the following "${viewPath}"`);
     }
 
-    return engine.render(path, Object.assign({cache: this.cache || this.env === Env.PROD}, engine.options, options));
+    const finalOpts = Object.assign({cache: this.cache || this.env === Env.PROD}, engine.options, options, {$ctx});
+
+    return engine.render(path, finalOpts);
   }
 
   protected getExtension(viewPath: string) {

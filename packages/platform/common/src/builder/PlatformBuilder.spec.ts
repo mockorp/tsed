@@ -1,18 +1,12 @@
-import {
-  AfterInit,
-  AfterListen,
-  AfterRoutesInit,
-  BeforeInit,
-  BeforeListen,
-  BeforeRoutesInit,
-  Controller,
-  Injectable,
-  InjectorService,
-  Module,
-  OnReady
-} from "@tsed/common";
 import {Type} from "@tsed/core";
-import {Configuration} from "@tsed/di";
+import {Configuration, Controller, Injectable, InjectorService, Module} from "@tsed/di";
+import {AfterInit} from "../interfaces/AfterInit";
+import {AfterListen} from "../interfaces/AfterListen";
+import {AfterRoutesInit} from "../interfaces/AfterRoutesInit";
+import {BeforeInit} from "../interfaces/BeforeInit";
+import {BeforeListen} from "../interfaces/BeforeListen";
+import {BeforeRoutesInit} from "../interfaces/BeforeRoutesInit";
+import {OnReady} from "../interfaces/OnReady";
 import {FakeAdapter} from "../services/FakeAdapter";
 import {Platform} from "../services/Platform";
 import {PlatformBuilder} from "./PlatformBuilder";
@@ -21,6 +15,7 @@ import {PlatformBuilder} from "./PlatformBuilder";
 class RestCtrl {}
 
 class PlatformCustom extends FakeAdapter {
+  static readonly NAME = "custom";
   readonly providers = [
     {
       provide: class Test {}
@@ -38,7 +33,7 @@ class PlatformCustom extends FakeAdapter {
     });
   }
 
-  static async bootstrap(module: Type<any>, settings: Partial<TsED.Configuration> = {}) {
+  static bootstrap(module: Type<any>, settings: Partial<TsED.Configuration> = {}) {
     return PlatformBuilder.build(module, {
       ...settings,
       adapter: PlatformCustom

@@ -1,10 +1,10 @@
 import "@tsed/ajv";
 import {BodyParams, Controller, Get, PathParams, PlatformTest, Post, Put} from "@tsed/common";
 import {deserialize} from "@tsed/json-mapper";
-import {PlatformTestUtils} from "@tsed/platform-test-utils";
+import {PlatformTestSdk} from "@tsed/platform-test-sdk";
 import {getSpec, Groups, Property, Returns, SpecTypes} from "@tsed/schema";
 import SuperTest from "supertest";
-import {PlatformExpress} from "../src";
+import {PlatformExpress} from "../src/index";
 import {rootDir, Server} from "./app/Server";
 
 class Product {
@@ -21,7 +21,7 @@ class Product {
   description: string;
 }
 
-const utils = PlatformTestUtils.create({
+const utils = PlatformTestSdk.create({
   rootDir,
   platform: PlatformExpress,
   server: Server
@@ -31,7 +31,7 @@ const utils = PlatformTestUtils.create({
 class TestGroupsCtrl {
   @Post("/")
   @Returns(201, Product).Groups("group.*")
-  async create(@BodyParams() @Groups("creation") payload: Product) {
+  create(@BodyParams() @Groups("creation") payload: Product) {
     return deserialize(
       {
         ...payload,
@@ -43,7 +43,7 @@ class TestGroupsCtrl {
 
   @Put("/:id")
   @Returns(200, Product)
-  async update(@BodyParams() @Groups("group.*") payload: Product, @PathParams("id") id: string) {
+  update(@BodyParams() @Groups("group.*") payload: Product, @PathParams("id") id: string) {
     expect(typeof payload.id).toBe("string");
 
     return payload;
@@ -51,7 +51,7 @@ class TestGroupsCtrl {
 
   @Get("/:id")
   @Returns(200, Product).Groups("group.summary")
-  async get(@PathParams("id") id: string) {
+  get(@PathParams("id") id: string) {
     return deserialize(
       {
         id,
@@ -90,7 +90,7 @@ describe("Groups", () => {
     request = SuperTest(PlatformTest.callback());
   });
 
-  it("should generate spec", async () => {
+  it("should generate spec", () => {
     const spec = getSpec(TestGroupsCtrl, {specType: SpecTypes.OPENAPI});
 
     expect(spec).toEqual({
